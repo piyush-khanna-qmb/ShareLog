@@ -15,6 +15,7 @@
 
 .newStrat {
     display: inline-block;
+    margin-left: 5px;
     padding: 10px 20px;
     border: 2px solid #3bda89;
     border-radius: 50px; /* Adjust the value to make the button more or less round */
@@ -37,6 +38,14 @@
     display: inline-block;
     background-color: #ddd;
 }
+.addNewDesc {
+    margin-top: 10px;
+
+    width: 50vh;
+    height: 10vh;
+    display: inline-block;
+    background-color: #ddd;
+}
 
 .container-list-here {
     overflow-y: auto; /*Enables inframe and its scrollbar*/
@@ -44,10 +53,25 @@
     font-size: x-large;
     display: inline-flexbox;
 }
+
 .container-content {
     display: flex;
     justify-content: space-between;
   }
+  .dropped-description{
+    display: none;
+    }  
+.dropped-description.show {
+        display: block;
+    }
+.container-content.active .dropped-description{
+    display: block;
+}
+
+.description-here {
+    padding: 20px;
+    font-size: medium;
+}
 
 .container-right {
     margin-right: 10vh;
@@ -89,4 +113,4 @@
 .delButton:hover {
     background-color: #e21616;
     color: white;
-}
+}   

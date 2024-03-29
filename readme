@@ -1,0 +1,22 @@
+"29 March, 2024:"
+
+%% FULFILLED THIS WEEK
+>. Theme saving
+>. Mongo Space allocated 
+>. MongoDB account linked
+>. Integration of database with user
+>. User profile section
+>. Speech saving functionality
+>. GridFS integrated with mongo
+>. Successful retrieval of speech data
+
+%% NEXT TASKS:
+>. Add text with speech, change respective architecture
+>. Buy Data APIs
+>. Generate charts
+>. Store chart data on mongo
+>. Website Hosting
+>. Session maintainence using google client
+>. QA
+
+-----------------------------------------------------------------------------

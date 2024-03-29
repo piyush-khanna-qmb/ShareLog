@@ -45,9 +45,20 @@
                             <form class="form-inline" action="/Strategies" method="post">
                                 <input type="search" class="form-control addNewStrat" placeholder="Add New Strategy..." name="Strat">
                                 <button type="submit" class="newStrat">Save</button>
+                                <br>
+                                <input type="text" class="form-control addNewDesc " placeholder="Add Description of your new Strategy..." name="Strat2">
                             </form>
                         </div>
                     </div>
+
+                    <!-- <div class="newAndSave">
+                        <div class="input-group neecheWala">
+                            <form class="form-inline" action="/Strategies" method="post">
+                                <input type="search" class="form-control addNewStrat" placeholder="Add New Strategy..." name="Strat">
+                                <button type="submit" class="newStrat">Save</button>
+                            </form>
+                        </div>
+                    </div> -->
                     
 
                     <div class="container-list-here">
@@ -65,6 +76,9 @@
                                   <button type="submit" class="delButton" name="submitStrat" value="<%= list[i] %>"><i class="fa-regular fa-trash-can fa-lg"></i></button>
                                 </div>
                             </div>
+                            <div class="dropped-description" >
+                              <p class="description-here">Description of this strategy</p>
+                            </div>
                         </div>
                       </form>
                     <% } %>
@@ -74,5 +88,19 @@
           </div>
         </div>
     </div>
+
+    <script>$(document).ready(function(){
+      $('.container-content').click(function(){
+          // Toggle the 'active' class on the clicked container-content element
+          $(this).toggleClass('active');
+          $(this).siblings('.dropped-description').toggleClass('show');
+      });
+  
+      // Prevent the click event from bubbling up to the parent container-list-item
+      $('.dropped-description').click(function(event){
+          event.stopPropagation();
+      });
+  });
+  </script>
 </body>
 </html>

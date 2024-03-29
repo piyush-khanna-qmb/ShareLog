@@ -1,0 +1,24 @@
+<div class="oopariNavbar">
+    <nav class="navbar navbar-custom">
+      <h1 class="navbar-text mr-auto hi-text">Hi, <%= Name %>!</h1>
+      <form class="form-inline">
+          <div class="input-group">
+            <form>
+              <input type="search" class="form-control search-bar" placeholder="Search by Album title, UPC, Artist" style="width: 60vh;">
+              <div class="input-group-append">
+                  <span class="input-group-text search-icon"><i class="fas fa-search"></i></span>
+              </div>
+            </form>
+          </div>
+      </form>
+      <span class="navbar-text ml-auto">
+          <span class="page-name"><%= Title%></span>
+          <img src="/test-images/piyush.jpg" alt="User Avatar" class="profile-icon">
+          <a href="/Profile/" >
+            <span class="username">
+              <%= Name %>
+            </span>
+          </a>
+      </span>
+    </nav>
+</div>

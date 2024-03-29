@@ -475,7 +475,6 @@ app.post('/toggle', async function (req, res) {
         user.theme= dataReceived.theme;
         console.log("Baad mein: "+user.theme);
     
-        // Save the updated user document
         await user.save();
         getThemeById(clientId)
         .then(theme => {

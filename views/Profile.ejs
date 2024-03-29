@@ -207,6 +207,7 @@
             })
             .then((response) => {
                 if (response.ok) {
+                    window.location.reload();
                     console.log('Theme updated successfully!');
                 } else {
                     console.error('Error updating theme.');
@@ -218,7 +219,6 @@
 
         }
 
-// Attach an event listener to the toggle switch
         checkbox.addEventListener('change', handleToggle);
     </script>
 </body>

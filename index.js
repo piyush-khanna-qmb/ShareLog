@@ -82,7 +82,7 @@ passport.deserializeUser(function(id, done) {
 passport.use(new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
-    callbackURL: "http://localhost:8080/auth/google/secrets",
+    callbackURL: "http://localhost:3000/auth/google/ShareLog",
     userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
   },
   function(accessToken, refreshToken, profile, cb) {
@@ -155,31 +155,54 @@ app.get("/", (req, res)=>{
         formattedDate ki jagah date of buying stuff from database
         Type: Holdings hain ya Position
     */
-    res.render("Dashboard.ejs", {
-        theme: "dark",
-        PageTitle: "Dashboard",
-        Name: "Piyush",
-        DateBought: formattedDate,
-        DayBought: dayNames[dayy],
-        TypePosOrHold: "P&L",
-        PAndL: "+2500.00",
-        TotStrats: 5,
-        TotPos: 7,
-        TotHolds: 59,
-        Amount: "+2980.50"
-    });
+
+        const googleClientId= "2vsdf12";
+        var themeThis= "none";
+        getThemeById(googleClientId)
+        .then(theme => {
+            // console.log("Strategies:", strategies);
+            themeThis= theme;
+            console.log("Theme this:"+ themeThis);
+            res.render("Dashboard.ejs", {
+                theme: themeThis,
+                PageTitle: "Dashboard",
+                Name: "Piyush",
+                DateBought: formattedDate,
+                DayBought: dayNames[dayy],
+                TypePosOrHold: "P&L",
+                PAndL: "+2500.00",
+                TotStrats: 5,
+                TotPos: 7,
+                TotHolds: 59,
+                Amount: "+2980.50"
+            });
+        })
+        .catch(err => {
+            console.error("Error:", err);
+        });    
 })
 
 app.get("/Portfolio", (req, res)=>{
-    res.render("Portfolio.ejs", 
-    {
-        theme: "dark",
-        PageTitle: "Portfolio",
-        Name: "Piyush",
-        PAndL: "50,000",
-        BestStrat: "Trendline",
-        NumTrads: 23,
-        TotBrokerage: "20,000",
+    const googleClientId= "2vsdf12";
+    var themeThis= "none";
+    getThemeById(googleClientId)
+    .then(theme => {
+        // console.log("Strategies:", strategies);
+        themeThis= theme;
+        console.log("Theme this:"+ themeThis);
+        res.render("Portfolio.ejs", 
+        {
+            theme: themeThis,
+            PageTitle: "Portfolio",
+            Name: "Piyush",
+            PAndL: "50,000",
+            BestStrat: "Trendline",
+            NumTrads: 23,
+            TotBrokerage: "20,000",
+        });
+    })
+    .catch(err => {
+        console.error("Error:", err);
     });
 })
 
@@ -215,14 +238,27 @@ app.get("/Positions", (req, res)=>{
         items= JSON.parse(body);
 
         var hasRecording = new Boolean(0);
-        res.render("Positions.ejs", 
-        {
-            theme: "dark",
-            PageTitle: "Positions",
-            Name: "Piyush",
-            list: items, 
-            isavailable: hasRecording
+        const googleClientId= "2vsdf12";
+        var themeThis= "none";
+        getThemeById(googleClientId)
+        .then(theme => {
+            // console.log("Strategies:", strategies);
+            themeThis= theme;
+            console.log("Theme this:"+ themeThis);
+            res.render("Positions.ejs", 
+            {
+                theme: themeThis,
+                PageTitle: "Positions",
+                Name: "Piyush",
+                list: items, 
+                isavailable: hasRecording
+            });
+        })
+        .catch(err => {
+            console.error("Error:", err);
         });
+        
+       
     });
 
     
@@ -280,32 +316,56 @@ app.get("/Holdings", (req, res)=>{
         // });
 
         var hasRecording = new Boolean(0);
-        res.render("Holdings.ejs", 
-        {
-            theme: "dark",
-            PageTitle: "Holdings",
-            Name: "Piyush",
-            list: items, 
-            isavailable: hasRecording
+        const googleClientId= "2vsdf12";
+        var themeThis= "none";
+        getThemeById(googleClientId)
+        .then(theme => {
+            // console.log("Strategies:", strategies);
+            themeThis= theme;
+            console.log("Theme this:"+ themeThis);
+            res.render("Holdings.ejs", 
+            {
+                theme: themeThis,
+                PageTitle: "Holdings",
+                Name: "Piyush",
+                list: items, 
+                isavailable: hasRecording
+            });
+        })
+        .catch(err => {
+            console.error("Error:", err);
         });
+        
     });
   
     
 })
 
 app.get("/Reports", (req, res)=>{
-    res.render("Report.ejs", 
-    {
-        theme: "dark",
-        PageTitle: "Report",
-        Name: "Piyush",
-        BestStrats: "Trendline",
-        BestTimeSlot: "Morning",
-        BestDay: "Monday",
-        BestLot: 20000,
-        BigPro: 2300,
-        BigLoss: 120
-    });
+    var themeThis= "none";
+    const googleClientId= "2vsdf12";
+        getThemeById(googleClientId)
+        .then(theme => {
+            // console.log("Strategies:", strategies);
+            themeThis= theme;
+            console.log("Theme this:"+ themeThis);
+            res.render("Report.ejs", 
+            {
+                theme: themeThis,
+                PageTitle: "Report",
+                Name: "Piyush",
+                BestStrats: "Trendline",
+                BestTimeSlot: "Morning",
+                BestDay: "Monday",
+                BestLot: 20000,
+                BigPro: 2300,
+                BigLoss: 120
+            });
+        })
+        .catch(err => {
+            console.error("Error:", err);
+        });
+    
 })
 
 async function getStrategiesByClientId(googleClientId) {
@@ -333,18 +393,28 @@ app.get("/Strategies", (req, res)=>{
     
     // const items = ['Strat 1', 'Start 2', 'STrat 3', 'Strat 4', 'Strat 5', 'Strat 6'];
     var items= [];
-    const googleClientId= "213vsdf12";
+    const googleClientId= "2vsdf12";
     // const googleClientId= req.session.googleClientId;
     getStrategiesByClientId(googleClientId)
     .then(strategies => {
         // console.log("Strategies:", strategies);
         items= strategies;
-        res.render("Strategies.ejs", 
-        {
-            theme: "dark",
-            PageTitle: "Strategies",
-            Name: "Piyush",
-            list: items
+        var themeThis= "none";
+        getThemeById(googleClientId)
+        .then(theme => {
+            // console.log("Strategies:", strategies);
+            themeThis= theme;
+            console.log("Theme this:"+ themeThis);
+            res.render("Strategies.ejs", 
+            {
+                theme: themeThis,
+                PageTitle: "Strategies",
+                Name: "Piyush",
+                list: items
+            });
+        })
+        .catch(err => {
+            console.error("Error:", err);
         });
     })
     .catch(err => {
@@ -361,7 +431,7 @@ app.post("/Strategies", async (req, res) => {
     
     else {
     
-        const googleClientId= "213vsdf12";
+        const googleClientId= "2vsdf12";
         const strategyName = newStrat; 
 
         try {
@@ -388,7 +458,7 @@ app.post("/Strategies", async (req, res) => {
 
 app.post("/del-strategy", async function (req, res) {
     // console.log(req.body);
-    const googleClientId= "213vsdf12";
+    const googleClientId= "2vsdf12";
     const strategyToDelete= req.body.submitStrat;
     try {
         const user = await User.findOne({ google_client_id: googleClientId });
@@ -431,7 +501,7 @@ async function getThemeById(googleClientId) {
 
 app.get("/Profile", (req, res)=>{
     var themeThis= "none";
-    const googleClientId= "213vsdf12";
+    const googleClientId= "2vsdf12";
     // const googleClientId= req.session.googleClientId;
     getThemeById(googleClientId)
     .then(theme => {
@@ -462,7 +532,7 @@ app.post('/toggle', async function (req, res) {
     const dataReceived = req.body;
     console.log(dataReceived);
     const theme = dataReceived.theme;
-    const clientId= "213vsdf12";
+    const clientId= "2vsdf12";
     console.log(typeof(dataReceived.theme));
     try {
         

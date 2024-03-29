@@ -9,6 +9,10 @@
     padding: 5vh 1vh;
 }
 
+.container2 {
+    height: 79vh;
+}
+
 .newStrat {
     display: inline-block;
     padding: 10px 20px;

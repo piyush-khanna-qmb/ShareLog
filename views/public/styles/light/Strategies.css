@@ -48,11 +48,10 @@
 
 .container-list-here {
     overflow-y: auto; /*Enables inframe and its scrollbar*/
-    max-height: 45vh; 
+    max-height: 35vh; 
     font-size: x-large;
     display: inline-flexbox;
 }
-
 
 .container-content {
     display: flex;

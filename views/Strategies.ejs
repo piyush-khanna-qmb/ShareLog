@@ -46,7 +46,7 @@
                                 <input type="search" class="form-control addNewStrat" placeholder="Add New Strategy..." name="Strat">
                                 <button type="submit" class="newStrat">Save</button>
                                 <br>
-                                <input type="text" class="form-control addNewDesc " placeholder="Add Description of your new Strategy..." name="Strat2">
+                                <input type="text" class="form-control addNewDesc " placeholder="Add Description of your new Strategy..." name="Descr">
                             </form>
                         </div>
                     </div>
@@ -69,20 +69,20 @@
                                 <div class="container-left">
                                   <h1 class="heading-list-serial-number"><%= i+1 %></h1>
                                   <div class="container-list-positons">
-                                    <h1><%= list[i] %></h1>
+                                    <h1><%= list[i][0] %></h1>
                                   </div>
                                 </div>
                                 <div class="container-right">
-                                  <button type="submit" class="delButton" name="submitStrat" value="<%= list[i] %>"><i class="fa-regular fa-trash-can fa-lg"></i></button>
+                                  <button type="submit" class="delButton" name="submitStrat" value="<%= list[i][0]%>"><i class="fa-regular fa-trash-can fa-lg"></i></button>
                                 </div>
                             </div>
                             <div class="dropped-description" >
-                              <p class="description-here">Description of this strategy</p>
+                              <p class="description-here"><%= list[i][1] %></p>
                             </div>
                         </div>
                       </form>
-                    <% } %>
-                  </div>
+                      <% } %>
+                    </div>
     
             </div>
           </div>

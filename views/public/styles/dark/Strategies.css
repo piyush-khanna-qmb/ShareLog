@@ -15,8 +15,8 @@
 
 .newStrat {
     display: inline-block;
-    margin-left: 5px;
     padding: 10px 20px;
+    margin-left: 5px;
     border: 2px solid #3bda89;
     border-radius: 50px; /* Adjust the value to make the button more or less round */
     background-color: transparent;
@@ -40,7 +40,6 @@
 }
 .addNewDesc {
     margin-top: 10px;
-
     width: 50vh;
     height: 10vh;
     display: inline-block;
@@ -49,7 +48,7 @@
 
 .container-list-here {
     overflow-y: auto; /*Enables inframe and its scrollbar*/
-    max-height: 45vh; 
+    max-height: 35vh; 
     font-size: x-large;
     display: inline-flexbox;
 }

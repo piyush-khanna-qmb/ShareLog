@@ -58,7 +58,7 @@ const userSchema = new mongoose.Schema({
     Best_Day_For_Trade: String,
     Best_Strategy: String,
     Best_Lot_Size: Number,
-    Strategies: [String],
+    Strategies: [[String]],
     // Positions: , 
     // Holdings: ,
     // Calendar: 
@@ -117,7 +117,7 @@ app.get("/tryUser", function (req, res) {
         Best_Day_For_Trade: "Monday",
         Best_Strategy: "Trendline",
         Best_Lot_Size: 123123,
-        Strategies: ["Trendline", "Khanna-Strat"],
+        Strategies: [["Trendline", "trend desc"], ["Khanna-Strat", "khanna-desc"]],
     });
     newUser.save()
     .then(function (models) {
@@ -389,18 +389,15 @@ async function getStrategiesByClientId(googleClientId) {
 
 app.get("/Strategies", (req, res)=>{
     
-    // const items = ['Strat 1', 'Start 2', 'STrat 3', 'Strat 4', 'Strat 5', 'Strat 6'];
     var items= [];
     const googleClientId= "2vsdf12";
     // const googleClientId= req.session.googleClientId;
     getStrategiesByClientId(googleClientId)
     .then(strategies => {
-        // console.log("Strategies:", strategies);
         items= strategies;
         var themeThis= "none";
         getThemeById(googleClientId)
         .then(theme => {
-            // console.log("Strategies:", strategies);
             themeThis= theme;
             res.render("Strategies.ejs", 
             {
@@ -422,7 +419,8 @@ app.get("/Strategies", (req, res)=>{
 app.post("/Strategies", async (req, res) => {
     // console.log(req.body);
     newStrat= req.body.Strat;
-    // console.log("New strategy is: "+newStrat);
+    newDesc= req.body.Descr;
+
     if(newStrat.length == 0 || newStrat==null || String(newStrat).trim().length == 0)
         res.redirect("/Strategies")
     
@@ -433,18 +431,18 @@ app.post("/Strategies", async (req, res) => {
 
         try {
         
-            // Find the user by google_client_id
             const user = await User.findOne({ google_client_id: googleClientId });
             // console.log(user);
             if (!user) {
             return res.status(404).json({ error: 'User not found' });
             }
-            // console.log(user.Strategies);
-            user.Strategies.push(newStrat);
+
+            if(newDesc.length == 0 || newDesc==null || String(newDesc).trim().length == 0)
+                newDesc= "No description provided."
+
+            user.Strategies.push([newStrat, newDesc]);
         
-            // Save the updated user document
             await user.save();
-            // console.log("Strategy addded successfully");
 
         } catch (error) {
             // console.error('Error adding strategy:', error);
@@ -454,9 +452,9 @@ app.post("/Strategies", async (req, res) => {
 })
 
 app.post("/del-strategy", async function (req, res) {
-    // console.log(req.body);
     const googleClientId= "2vsdf12";
     const strategyToDelete= req.body.submitStrat;
+    // console.log(strategyToDelete);
     try {
         const user = await User.findOne({ google_client_id: googleClientId });
     
@@ -464,7 +462,9 @@ app.post("/del-strategy", async function (req, res) {
           return res.status(404).json({ error: 'User not found' });
         }
     
-        user.Strategies = user.Strategies.filter(strategy => strategy !== strategyToDelete);
+        user.Strategies = user.Strategies.filter(strategy => {
+            return strategy[0] !== strategyToDelete;
+        });
     
         await user.save();
     

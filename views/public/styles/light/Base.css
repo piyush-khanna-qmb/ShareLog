@@ -31,6 +31,10 @@ body {
     padding-top: 1rem;
 }
 
+.notifBell {
+    color: goldenrod;
+    margin-right: 25px
+}
 
 
 /* Navbar container */

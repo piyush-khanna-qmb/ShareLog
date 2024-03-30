@@ -86,6 +86,12 @@ body {
     font-weight: bold;
 }
 
+.notifBell {
+    color: goldenrod;
+    margin-right: 25px
+}
+
+
 img.profile-icon {
     width: 35px;
     height: 35px;

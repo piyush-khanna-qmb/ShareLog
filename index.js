@@ -162,7 +162,7 @@ app.get("/", (req, res)=>{
         .then(theme => {
             // console.log("Strategies:", strategies);
             themeThis= theme;
-            console.log("Theme this:"+ themeThis);
+            // console.log("Theme this:"+ themeThis);
             res.render("Dashboard.ejs", {
                 theme: themeThis,
                 PageTitle: "Dashboard",
@@ -206,9 +206,8 @@ app.get("/Portfolio", (req, res)=>{
     });
 })
 
-app.get("/Positions", (req, res)=>{
-    
-
+app.get("/Positions", (req, res)=>
+{ 
     //! Check for new Positions bought, add them to DB. 
     //! Check if it is equity/future etc and add to total number
     //! Add to calendar equity/futures for the day
@@ -244,7 +243,7 @@ app.get("/Positions", (req, res)=>{
         .then(theme => {
             // console.log("Strategies:", strategies);
             themeThis= theme;
-            console.log("Theme this:"+ themeThis);
+            // console.log("Theme this:"+ themeThis);
             res.render("Positions.ejs", 
             {
                 theme: themeThis,
@@ -322,7 +321,7 @@ app.get("/Holdings", (req, res)=>{
         .then(theme => {
             // console.log("Strategies:", strategies);
             themeThis= theme;
-            console.log("Theme this:"+ themeThis);
+            // console.log("Theme this:"+ themeThis);
             res.render("Holdings.ejs", 
             {
                 theme: themeThis,
@@ -348,7 +347,6 @@ app.get("/Reports", (req, res)=>{
         .then(theme => {
             // console.log("Strategies:", strategies);
             themeThis= theme;
-            console.log("Theme this:"+ themeThis);
             res.render("Report.ejs", 
             {
                 theme: themeThis,
@@ -404,7 +402,6 @@ app.get("/Strategies", (req, res)=>{
         .then(theme => {
             // console.log("Strategies:", strategies);
             themeThis= theme;
-            console.log("Theme this:"+ themeThis);
             res.render("Strategies.ejs", 
             {
                 theme: themeThis,

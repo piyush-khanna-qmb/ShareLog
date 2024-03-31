@@ -399,7 +399,6 @@ app.get("/ShareLog-Analysis", (req, res)=>{
     const googleClientId= "2vsdf12";
         getThemeById(googleClientId)
         .then(theme => {
-            // console.log("Strategies:", strategies);
             themeThis= theme;
             res.render("ShareLog-Analysis.ejs", 
             {

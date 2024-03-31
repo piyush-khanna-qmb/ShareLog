@@ -340,14 +340,14 @@ app.get("/Holdings", (req, res)=>{
     
 })
 
-app.get("/Reports", (req, res)=>{
+app.get("/Overview-Report", (req, res)=>{
     var themeThis= "none";
     const googleClientId= "2vsdf12";
         getThemeById(googleClientId)
         .then(theme => {
             // console.log("Strategies:", strategies);
             themeThis= theme;
-            res.render("Report.ejs", 
+            res.render("Overview-Report.ejs", 
             {
                 theme: themeThis,
                 PageTitle: "Overview Report",
@@ -373,7 +373,7 @@ app.get("/Setup-Report", (req, res)=>{
         .then(theme => {
             // console.log("Strategies:", strategies);
             themeThis= theme;
-            res.render("Report.ejs", 
+            res.render("Setup-Report.ejs", 
             {
                 theme: themeThis,
                 PageTitle: "Setup Report",
@@ -399,7 +399,7 @@ app.get("/ShareLog-Analysis", (req, res)=>{
         .then(theme => {
             // console.log("Strategies:", strategies);
             themeThis= theme;
-            res.render("Report.ejs", 
+            res.render("ShareLog-Analysis.ejs", 
             {
                 theme: themeThis,
                 PageTitle: "Analysis",

@@ -350,7 +350,59 @@ app.get("/Reports", (req, res)=>{
             res.render("Report.ejs", 
             {
                 theme: themeThis,
-                PageTitle: "Report",
+                PageTitle: "Overview Report",
+                Name: "Piyush",
+                BestStrats: "Trendline",
+                BestTimeSlot: "Morning",
+                BestDay: "Monday",
+                BestLot: 20000,
+                BigPro: 2300,
+                BigLoss: 120
+            });
+        })
+        .catch(err => {
+            console.error("Error:", err);
+        });
+    
+})
+
+app.get("/Setup-Report", (req, res)=>{
+    var themeThis= "none";
+    const googleClientId= "2vsdf12";
+        getThemeById(googleClientId)
+        .then(theme => {
+            // console.log("Strategies:", strategies);
+            themeThis= theme;
+            res.render("Report.ejs", 
+            {
+                theme: themeThis,
+                PageTitle: "Setup Report",
+                Name: "Piyush",
+                BestStrats: "Trendline",
+                BestTimeSlot: "Morning",
+                BestDay: "Monday",
+                BestLot: 20000,
+                BigPro: 2300,
+                BigLoss: 120
+            });
+        })
+        .catch(err => {
+            console.error("Error:", err);
+        });
+    
+})
+
+app.get("/ShareLog-Analysis", (req, res)=>{
+    var themeThis= "none";
+    const googleClientId= "2vsdf12";
+        getThemeById(googleClientId)
+        .then(theme => {
+            // console.log("Strategies:", strategies);
+            themeThis= theme;
+            res.render("Report.ejs", 
+            {
+                theme: themeThis,
+                PageTitle: "Analysis",
                 Name: "Piyush",
                 BestStrats: "Trendline",
                 BestTimeSlot: "Morning",
@@ -467,32 +519,26 @@ app.post("/del-strategy", async function (req, res) {
         });
     
         await user.save();
-    
-        // console.log('Strategy deleted successfully');
         res.redirect("Strategies")
-      } catch (error) {
-        // console.error('Error deleting strategy:', error);
+      } 
+      catch (error) {
         return res.status(500).json({ error: 'Internal server error' });
       }
 })
 
 async function getThemeById(googleClientId) {
     try {
-        // Find the user with the given google_client_id
         const user = await User.findOne({ google_client_id: googleClientId });
 
         if (!user) {
-            // console.log("User not found");
-            return ""; // Return an empty array if user not found
+            return ""; 
         }
 
-        // Access the Strategies field from the user document
         const theme = user.theme;
 
         return theme;
     } catch (error) {
-        // console.error("Error fetching strategies:", error);
-        return []; // Return an empty array in case of error
+        return [];
     }
 }
 

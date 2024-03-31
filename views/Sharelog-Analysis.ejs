@@ -22,9 +22,9 @@
     <% } %>
     
     <% if (theme === "dark") { %>
-      <link href="/styles/dark/Report.css" rel="stylesheet" type="text/css">
+      <link href="/styles/dark/Analysis.css" rel="stylesheet" type="text/css">
     <% } else { %>
-      <link href="/styles/light/Report.css" rel="stylesheet" type="text/css">
+      <link href="/styles/light/Analysis.css" rel="stylesheet" type="text/css">
     <% } %>
 </head>
 <body>
@@ -35,17 +35,6 @@
           <%- include("partials/oopari-navbar.ejs", {Title: PageTitle, Name: Name}) %>
             
             <div class="container2">
-              <div class="container-heading">
-                <h1 class="main-heading">ShareLog Analysis</h1>
-              </div>
-              <div class="Bhandaari">                
-                
-                <div class="calContainer">
-                  <div id="cal-heatmap"></div>
-                </div>
-                
-
-              </div>
 
               <span class="Spacer"></span>
 
@@ -99,66 +88,5 @@
             </div>
           </div> 
     </div>
-    
-
-    <script type="text/javascript">
-
-      var prop= "equity";
-
-      const cal = new CalHeatmap();
-      const data = [
-          { defaultValue: -9} ,
-          { date: '2024-07-01', equity: -4, commodity: -2, fAndO: -4, currency: 4 },
-          { date: '2024-07-02', equity: -3, commodity: 2, fAndO: 4, currency: 2 },
-          { date: '2024-07-03', equity: -2, commodity: 2, fAndO: 4, currency: 2 },
-          { date: '2024-07-04', equity: -1, commodity: 2, fAndO: 4, currency: 2 },
-          { date: '2024-07-05', equity: 0, commodity: -2, fAndO: -4, currency: 4 },
-          { date: '2024-07-06', equity: 1, commodity: 2, fAndO: 4, currency: 2 },
-          { date: '2024-07-07', equity: 2, commodity: 2, fAndO: 4, currency: 2 },
-          { date: '2024-07-08', equity: 3, commodity: 2, fAndO: 4, currency: 2 },
-          { date: '2024-07-09', equity: 4, commodity: 2, fAndO: 4, currency: 2 },
-      ];
-      const tooltip = document.createElement('div');
-      cal.on('mouseover', (event, timestamp, value) => {
-          tooltip.className = 'custom-tooltip'; // You can style this class in your CSS
-
-          const formattedDate = new Date(timestamp).toLocaleDateString();
-
-          // tooltip.innerHTML = `On <b>${formattedDate}</b>, the max temperature was ${value}°C`;
-          tooltip.innerHTML = `<b>${formattedDate}</b>`;
-          tooltip.style.position = 'absolute';
-          tooltip.style.left = `${event.pageX + 10}px`;
-          tooltip.style.top = `${event.pageY + 10}px`; 
-
-          document.body.appendChild(tooltip);
-      });
-      cal.on('mouseout', () => {
-          document.body.removeChild(tooltip);
-      });
-      cal.paint({ 
-          itemSelector: '#cal-heatmap',
-          data: { source: data, x: 'date', y: prop },
-          domain: { type: 'month', gutter: 8 },
-          subDomain: {
-              width: 15,
-              height: 15,
-              type: 'day',
-              // label: 'D',  //Uncomment this to show dates 
-          },
-          date: {
-              timezone: 'Asia/Calcutta', 
-              start: new Date("2024-01-01"),
-              highlight: [new Date()], // Highlight today
-          },
-          scale: {
-              color: {
-                  range: ["#820300", "#BE3144", "#F05941", "#F99B7D", "#FFF67E", "#BFEA7C", "#BED754", "#9BCF53", "#416D19"],
-                  interpolate: d3.interpolateRgb,
-                  type: 'linear',
-                  domain: [-4, -3, -2, -1, 0, 1, 2, 3, 4],
-              },
-          },
-      });
-  </script>
 </body>
 </html>

@@ -22,9 +22,9 @@
     <% } %>
     
     <% if (theme === "dark") { %>
-      <link href="/styles/dark/Report.css" rel="stylesheet" type="text/css">
+      <link href="/styles/dark/Overview-Report.css" rel="stylesheet" type="text/css">
     <% } else { %>
-      <link href="/styles/light/Report.css" rel="stylesheet" type="text/css">
+      <link href="/styles/light/Overview-Report.css" rel="stylesheet" type="text/css">
     <% } %>
 </head>
 <body>
@@ -49,35 +49,44 @@
 
               <span class="Spacer"></span>
 
-              <div class="container-heading">
-                <h1 class="main-heading">ShareLog Analysis</h1>
-              </div>
               <div class="Bhandaari2">          
                 <div class="container-of-containers">
                   <div class="container-cards card1">
                     <div class="card-body">
-                      <h5 class="card-title">Best Strategy</h5>
-                      <p class="card-text"> <%= BestStrats %> </p>
+                      <h5 class="card-title">Account Balance</h5>
+                      <p class="card-text"> <%= AccBalance %> </p>
                     </div>
                   </div>
                   <div class="container-cards card2">
                     <div class="card-body">
-                      <h5 class="card-title">Best Timeslot</h5>
-                      <p class="card-text"><%= BestTimeSlot %></p>
+                      <h5 class="card-title">Cumulative Return</h5>
+                      <p class="card-text"><%= CumRet %></p>
+                    </div>
+                  </div>
+                  <div class="container-cards card2">
+                    <div class="card-body">
+                      <h5 class="card-title">Net-Cumulative Return</h5>
+                      <p class="card-text"><%= NonCumRet %></p>
                     </div>
                   </div>
                   <div class="container-cards card3">
                     <div class="card-body">
-                      <h5 class="card-title">Best Day for Trading</h5>
-                      <p class="card-text"><%= BestDay %></p>
+                      <h5 class="card-title">Daily Returns</h5>
+                      <p class="card-text"><%= DaiRet %></p>
                     </div>
                   </div>
                 </div>
                 <div class="container-of-containers">
                   <div class="container-cards card4">
                     <div class="card-body">
-                      <h5 class="card-title">Best Lot Size</h5>
-                      <p class="card-text"><%= BestLot %></p>
+                      <h5 class="card-title">Return On Win</h5>
+                      <p class="card-text"><%= RetWin %></p>
+                    </div>
+                  </div>
+                  <div class="container-cards card5">
+                    <div class="card-body">
+                      <h5 class="card-title">Return On Loss</h5>
+                      <p class="card-text"><%= RetLoss %></p>
                     </div>
                   </div>
                   <div class="container-cards card5">

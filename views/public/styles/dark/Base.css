@@ -114,7 +114,8 @@ img.profile-icon {
 }
   
 .main-heading {
-    color: rgb(98, 105, 112);
+    /* color: rgb(98, 105, 112); */
+    color: #8c8d8f;
     margin: 20px auto 0;
 }
 

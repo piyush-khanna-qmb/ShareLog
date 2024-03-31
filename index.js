@@ -352,12 +352,14 @@ app.get("/Overview-Report", (req, res)=>{
                 theme: themeThis,
                 PageTitle: "Overview Report",
                 Name: "Piyush",
-                BestStrats: "Trendline",
-                BestTimeSlot: "Morning",
-                BestDay: "Monday",
-                BestLot: 20000,
-                BigPro: 2300,
-                BigLoss: 120
+                AccBalance: "12,340.5",
+                CumRet: "120.5",
+                NonCumRet: "230.5",
+                DaiRet: "1,340.5",
+                RetWin: "1,234.5",
+                RetLoss: "2,300",
+                BigPro: "2,300",
+                BigLoss: "120"
             });
         })
         .catch(err => {

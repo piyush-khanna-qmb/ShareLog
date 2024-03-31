@@ -133,8 +133,21 @@ app.get("/tryUser", function (req, res) {
     });
 })
 
+app.get("/", function(req, res) {
+    console.log(req.user);
+    if(req.isAuthenticated()) {
+        console.log("Apna hi launda hai.")
+        res.redirect("/Dashboard")
+    } else {
+        res.redirect("/Home")
+    }
+})
 
-app.get("/", (req, res)=>{
+app.post("/welcome", function (req, res) {
+    console.log(req.body);
+    res.redirect("/Dashboard")
+})
+app.get("/Dashboard", (req, res)=>{
     const currentDate = new Date();
     const monthNames = [
     "Jan", "Feb", "Mar",
@@ -606,6 +619,18 @@ app.post('/toggle', async function (req, res) {
 
 app.get("/Signup", (req, res)=>{
     res.render("SignUp.ejs");
+})
+
+app.get("/Signin", (req, res)=>{
+    res.render("SignIn.ejs");
+})
+
+app.get("/Home", (req, res)=>{
+    res.render("Home.ejs");
+})
+
+app.get("/Welcome", (req, res)=>{
+    res.render("Welcome.ejs");
 })
 
 app.get('/auth/google',

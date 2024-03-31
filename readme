@@ -20,3 +20,23 @@
 >. QA
 
 -----------------------------------------------------------------------------
+
+"31 March, 2024:"
+
+%% FULFILLED 
+>. Home page
+>. Dashboard authentication
+>. Sign up page
+>. Sign up page
+>. Welcome page
+>. Welcome integrated with backend
+>. 3 separate sections for reports
+
+%% NEXT TASKS:
+>. Add text with speech, change respective architecture
+>. Test Data APIs on 1 April
+>. Generate charts
+>. Store chart data on mongo
+>. Website Hosting
+>. Session maintainence using google client
+>. QA

@@ -104,7 +104,7 @@ async function createUser(data) {
             Best_Day_For_Trade: "",
             Best_Strategy: "",
             Best_Lot_Size: 0,
-            Strategies: [[""]],
+            Strategies: [],
             // Positions: [], 
             // Holdings: [],
             // Calendar: []
@@ -207,45 +207,45 @@ app.get("/logout", function (req, res) {
     });
 })
 
-app.get("/tryUser", function (req, res) {
-    var newUser= new User({
-        google_client_id: req.session.passport.user.google_client_id,
-        name: "Piyush Khanna",
-        email: "piyushb@gmail",
-        contact: 8755122371,
-        profile_pic: "www.google.com",
-        theme: "dark",
-        dhan_key: "Dhan-cdsdcsd",
-        zerodha_key: "Zero-csdcsdc",
-        period: "permanent",
-        Total_Positions: 321,
-        Total_Holdings: 3222,
-        Total_Equities: 3123,
-        Total_FAndO: 22,
-        Total_Currencies: 1,
-        Total_Commodities: 121,
-        Total_Trades: 2121,
-        Total_Brokerage: 121, //- from unrealized profit
-        Biggest_Profit: 21111,
-        Biggest_Loss: 21,
-        Best_Day_For_Trade: "Monday",
-        Best_Strategy: "Trendline",
-        Best_Lot_Size: 123123,
-        Strategies: [["Trendline", "trend desc"], ["Khanna-Strat", "khanna-desc"]],
-    });
-    newUser.save()
-    .then(function (models) {
-        if(models) {
-            // console.log("Added Successfully!");
-            console.log("User saved");
-            res.redirect("/");
-        }
-    })
-    .catch( function (err) {
-        console.log(err);
-        res.send("Pehle se hi hai")
-    });
-})
+// app.get("/tryUser", function (req, res) {
+//     var newUser= new User({
+//         google_client_id: req.session.passport.user.google_client_id,
+//         name: "Piyush Khanna",
+//         email: "piyushb@gmail",
+//         contact: 8755122371,
+//         profile_pic: "www.google.com",
+//         theme: "dark",
+//         dhan_key: "Dhan-cdsdcsd",
+//         zerodha_key: "Zero-csdcsdc",
+//         period: "permanent",
+//         Total_Positions: 321,
+//         Total_Holdings: 3222,
+//         Total_Equities: 3123,
+//         Total_FAndO: 22,
+//         Total_Currencies: 1,
+//         Total_Commodities: 121,
+//         Total_Trades: 2121,
+//         Total_Brokerage: 121, //- from unrealized profit
+//         Biggest_Profit: 21111,
+//         Biggest_Loss: 21,
+//         Best_Day_For_Trade: "Monday",
+//         Best_Strategy: "Trendline",
+//         Best_Lot_Size: 123123,
+//         Strategies: [["Trendline", "trend desc"], ["Khanna-Strat", "khanna-desc"]],
+//     });
+//     newUser.save()
+//     .then(function (models) {
+//         if(models) {
+//             // console.log("Added Successfully!");
+//             console.log("User saved");
+//             res.redirect("/");
+//         }
+//     })
+//     .catch( function (err) {
+//         console.log(err);
+//         res.send("Pehle se hi hai")
+//     });
+// })
 
 app.get("/", function(req, res) {
     console.log(req.user);
@@ -294,7 +294,7 @@ app.get("/Dashboard", (req, res)=>{
                 res.render("Dashboard.ejs", {
                     theme: themeThis,
                     PageTitle: "Dashboard",
-                    Name: "Piyush",
+                    Name: req.session.passport.user.name.split(" ")[0],
                     DateBought: formattedDate,
                     DayBought: dayNames[dayy],
                     TypePosOrHold: "P&L",
@@ -330,7 +330,7 @@ app.get("/Portfolio", (req, res)=>{
             {
                 theme: themeThis,
                 PageTitle: "Portfolio",
-                Name: "Piyush",
+                Name: req.session.passport.user.name.split(" ")[0],
                 PAndL: "50,000",
                 BestStrat: "Trendline",
                 NumTrads: 23,
@@ -388,7 +388,7 @@ app.get("/Positions", (req, res)=>
                 {
                     theme: themeThis,
                     PageTitle: "Positions",
-                    Name: "Piyush",
+                    Name: req.session.passport.user.name.split(" ")[0],
                     list: items, 
                     isavailable: hasRecording
                 });
@@ -469,7 +469,7 @@ app.get("/Holdings", (req, res)=>{
                 {
                     theme: themeThis,
                     PageTitle: "Holdings",
-                    Name: "Piyush",
+                    Name: req.session.passport.user.name.split(" ")[0],
                     list: items, 
                     isavailable: hasRecording
                 });
@@ -498,7 +498,7 @@ app.get("/Overview-Report", (req, res)=>{
                 {
                     theme: themeThis,
                     PageTitle: "Overview Report",
-                    Name: "Piyush",
+                    Name: req.session.passport.user.name.split(" ")[0],
                     AccBalance: "12,340.5",
                     CumRet: "120.5",
                     NonCumRet: "230.5",
@@ -530,7 +530,7 @@ app.get("/Setup-Report", (req, res)=>{
                 {
                     theme: themeThis,
                     PageTitle: "Setup Report",
-                    Name: "Piyush",
+                    Name: req.session.passport.user.name.split(" ")[0],
                     BestStrats: "Trendline",
                     BestTimeSlot: "Morning",
                     BestDay: "Monday",
@@ -559,7 +559,7 @@ app.get("/ShareLog-Analysis", (req, res)=>{
                 {
                     theme: themeThis,
                     PageTitle: "Analysis",
-                    Name: "Piyush",
+                    Name: req.session.passport.user.name.split(" ")[0],
                     BestStrats: "Trendline",
                     BestTimeSlot: "Morning",
                     BestDay: "Monday",
@@ -615,7 +615,7 @@ app.get("/Strategies", (req, res)=>{
                 {
                     theme: themeThis,
                     PageTitle: "Strategies",
-                    Name: "Piyush",
+                    Name: req.session.passport.user.name.split(" ")[0],
                     list: items
                 });
             })
@@ -709,34 +709,45 @@ async function getThemeById(googleClientId) {
     }
 }
 
-app.get("/Profile", (req, res)=>{
+app.get("/Profile", async (req, res)=>{
     if(req.isAuthenticated()) {
         var themeThis= "none";
         const googleClientId= req.session.passport.user.google_client_id;
         // const googleClientId= req.session.googleClientId;
-        getThemeById(googleClientId)
-        .then(theme => {
-            // console.log("Strategies:", strategies);
-            themeThis= theme;
-            console.log("Theme this:"+ themeThis);
+
+        try {
+            // Find the document with the given 'google_id'
+            const doc = await User.findOne({ google_client_id: googleClientId });
+    
             res.render("Profile.ejs", 
             {
-                theme: themeThis,
+                theme: doc.theme,
                 PageTitle: "Profile",
-                Name: "Piyush",
-                imgSrc: "/test-images/piyush.jpg",
-                fullName: "Piyush Khanna",
-                dhanClientID: "678-32-23432-1",
-                HQClientID: "2004-2813-cd-12",
-                userEmail: "piyushkhannavb@gmail.com",
-                userContact: "+91 8439363900",
-                accType: "Trial",
+                Name: doc.name.split(" ")[0],
+                imgSrc: doc.profile_pic,
+                fullName: doc.name,
+                dhanClientID: doc.dhan_key,
+                HQClientID: doc.zerodha_key,
+                userEmail: doc.email,
+                userContact: doc.contact,
+                accType: doc.period,
                 endDate: "20th Sept, 2069"
             });
-        })
-        .catch(err => {
-            console.error("Error:", err);
-        });
+
+        } catch (error) {
+            console.error("Error updating 'zerodha_id':", error);
+        }
+
+        // getThemeById(googleClientId)
+        // .then(theme => {
+        //     // console.log("Strategies:", strategies);
+        //     themeThis= theme;
+        //     console.log("Theme this:"+ themeThis);
+            
+        // })
+        // .catch(err => {
+        //     console.error("Error:", err);
+        // });
     } else {
         res.redirect("/Home")
     }

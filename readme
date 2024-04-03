@@ -31,6 +31,7 @@
 >. Welcome page
 >. Welcome integrated with backend
 >. 3 separate sections for reports
+>>> On pause till server hosting
 
 %% NEXT TASKS:
 >. Add text with speech, change respective architecture
@@ -40,3 +41,28 @@
 >. Website Hosting
 >. Session maintainence using google client
 >. QA
+
+%%TENTATIVE ACTION PLAN
+31 March, 24:
+>. Setup charts, light theme, logo 
+
+1 April, 24:
+>. Work on light theme
+>. Logo assembly
+>. Setup charts page creation
+>. Data APIs test and Integration
+>. Charts storing
+>. Speech and text addition
+
+2 April, 24:
+>. Payment of 10k
+>. Server hosting
+
+3 April, 24:
+>. Fill info with specific gmail account settings
+>. Buy page and razorpay gateway integration
+>. Google Session maintainence work
+>. Sign up pages integration
+
+4 April, 24:
+>. Rest of the payment: 5k

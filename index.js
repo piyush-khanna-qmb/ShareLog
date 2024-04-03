@@ -36,7 +36,7 @@ mongoose
 });
 
 const userSchema = new mongoose.Schema({
-    google_client_id: String,
+    google_client_id:  { type: String, unique: true, required: true },
     name: String,
     email: String,
     contact: Number,
@@ -59,9 +59,9 @@ const userSchema = new mongoose.Schema({
     Best_Strategy: String,
     Best_Lot_Size: Number,
     Strategies: [[String]],
-    // Positions: , 
-    // Holdings: ,
-    // Calendar: 
+    // Positions: [], 
+    // Holdings: [],
+    // Calendar: []
 });
 
 userSchema.plugin(passportLocalMongoose);
@@ -69,33 +69,147 @@ userSchema.plugin(findOrCreate)
 
 const User = new mongoose.model("User", userSchema);
 
-passport.use(User.createStrategy());
+async function findUserByGoogleClientId(googleClientId) {
+    try {
+      const user = await User.findOne({ google_client_id: googleClientId });
+      return user;
+    } catch (error) {
+      console.error('Error finding user by Google Client ID:', error);
+      throw error;
+    }
+  }
+
+async function createUser(data) {
+    try {
+        const newUser = new User({
+            google_client_id: data.google_client_id,
+            name: data.name,
+            email: data.email,
+            contact: "",
+            profile_pic: data.profile_pic,
+            theme: "dark",
+            dhan_key: "",
+            zerodha_key: "",
+            period: "trial",
+            Total_Positions: 0,
+            Total_Holdings: 0,
+            Total_Equities: 0,
+            Total_FAndO: 0,
+            Total_Currencies: 0,
+            Total_Commodities: 0,
+            Total_Trades: 0,
+            Total_Brokerage: 0, //- from unrealized profit
+            Biggest_Profit: 0,
+            Biggest_Loss: 0,
+            Best_Day_For_Trade: "",
+            Best_Strategy: "",
+            Best_Lot_Size: 0,
+            Strategies: [[""]],
+            // Positions: [], 
+            // Holdings: [],
+            // Calendar: []
+        });
+
+        const savedUser = await newUser.save();
+        return savedUser;
+    } catch (error) {
+        console.error('Error creating user:', error);
+        return "";
+    }
+}
+
+// passport.use(User.createStrategy());
 passport.serializeUser(function(user, done) {
-    done(null, user.id);
+    done(null, user);
 });
 passport.deserializeUser(function(id, done) {
-    User.findById(id, function(err, user) {
-        done(err, user);
-    })
+    done(null, id);
 });
 
-passport.use(new GoogleStrategy({
+passport.use("google", new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     callbackURL: "http://localhost:3000/auth/google/ShareLog",
     userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
   },
-  function(accessToken, refreshToken, profile, cb) {
+  async function(accessToken, refreshToken, profile, cb) {
     console.log(profile)
-    User.findOrCreate({ googleId: profile.id }, function (err, user) {
-      return cb(err, user);
-    });
+    // res.redirect("/Dashboard")
+    try {
+        findUserByGoogleClientId(profile.id)
+        .then(user => {
+            if (user) {
+            console.log('Found user:', user);
+            cb(null, user)
+            } else {
+            console.log('User not found.');
+            
+            var data= {
+                google_client_id: profile.id,
+                name: profile.displayName,
+                email: profile.emails[0].value,
+                profile_pic: profile.photos[0].value,
+            }
+
+            createUser(data)
+            .then(newUser => {
+                console.log('New user created:', newUser);
+                cb(null, newUser);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+                
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+    catch {
+        console.log("Lulla")
+    }
   }
 ));
 
+
+app.get('/auth/google',
+  passport.authenticate("google", 
+  { scope: ['profile', 'email'] }
+  ));
+
+app.get('/auth/google/ShareLog', 
+  passport.authenticate('google', { 
+    successRedirect: "/HandleNew",
+    failureRedirect: '/Signin' }),
+  function(req, res) {
+    // Successful authentication, redirect home.
+    const googleClientId = req.user.googleClientId; // Assuming req.user contains user data from authentication
+    req.session.googleClientId = googleClientId;
+    res.redirect('/Dashboard');
+  }
+);
+
+app.get("/HandleNew", function (req, res) {
+    if(String(req.session.passport.user.dhan_key).length === 0) {
+        // User with no zerodha key. Should redirect to Welcome page
+        res.redirect("/Welcome");
+    }
+    else{
+        // Redirect to Dashboard directly
+        res.redirect("/Dashboard")
+    }
+})
+
+app.get("/logout", function (req, res) {
+    req.session.destroy(function (err) {
+        res.redirect('/');
+    });
+})
+
 app.get("/tryUser", function (req, res) {
     var newUser= new User({
-        google_client_id: "2vsdf12",
+        google_client_id: req.session.passport.user.google_client_id,
         name: "Piyush Khanna",
         email: "piyushb@gmail",
         contact: 8755122371,
@@ -139,297 +253,328 @@ app.get("/", function(req, res) {
         console.log("Apna hi launda hai.")
         res.redirect("/Dashboard")
     } else {
+        console.log("Jabardasti ki entry");
         res.redirect("/Home")
     }
 })
 
-app.post("/welcome", function (req, res) {
-    console.log(req.body);
-    res.redirect("/Dashboard")
-})
 app.get("/Dashboard", (req, res)=>{
-    const currentDate = new Date();
-    const monthNames = [
-    "Jan", "Feb", "Mar",
-    "Apr", "May", "Jun", "Jul",
-    "Aug", "Sept", "Oct",
-    "Nov", "Dec"
-    ];
-    const day = currentDate.getDate();
-    const monthIndex = currentDate.getMonth();
-    const year = currentDate.getFullYear();
-    const dayy= currentDate.getDay();
-    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-    const formattedDate = `${day} ${monthNames[monthIndex]}, ${year}`;
+    if(req.isAuthenticated()) {
 
-    //! Get these data in real time from the API
-    /* 
-        formattedDate ki jagah date of buying stuff from database
-        Type: Holdings hain ya Position
-    */
+        const currentDate = new Date();
+        const monthNames = [
+        "Jan", "Feb", "Mar",
+        "Apr", "May", "Jun", "Jul",
+        "Aug", "Sept", "Oct",
+        "Nov", "Dec"
+        ];
+        const day = currentDate.getDate();
+        const monthIndex = currentDate.getMonth();
+        const year = currentDate.getFullYear();
+        const dayy= currentDate.getDay();
+        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        console.log(req.session.passport.user.google_client_id);
+        console.log(req.session.passport.user.name);
+        const formattedDate = `${day} ${monthNames[monthIndex]}, ${year}`;
 
-        const googleClientId= "2vsdf12";
+        //! Get these data in real time from the API
+        /* 
+            formattedDate ki jagah date of buying stuff from database
+            Type: Holdings hain ya Position
+        */
+
+            const googleClientId= req.session.passport.user.google_client_id;
+            var themeThis= "none";
+            getThemeById(googleClientId)
+            .then(theme => {
+                // console.log("Strategies:", strategies);
+                themeThis= theme;
+                // console.log("Theme this:"+ themeThis);
+                res.render("Dashboard.ejs", {
+                    theme: themeThis,
+                    PageTitle: "Dashboard",
+                    Name: "Piyush",
+                    DateBought: formattedDate,
+                    DayBought: dayNames[dayy],
+                    TypePosOrHold: "P&L",
+                    PAndL: "+2500.00",
+                    TotStrats: 5,
+                    TotPos: 7,
+                    TotHolds: 59,
+                    Amount: "+2980.50"
+                });
+            })
+            .catch(err => {
+                console.error("Error:", err);
+            });    
+
+    } else {
+        console.log("Jabardasti ki entry");
+        res.redirect("/Home")
+    }
+})
+
+app.get("/Portfolio", (req, res)=>{
+
+    if(req.isAuthenticated()) {
+        console.log("Profile me: "+ req.session.passport.user.google_client_id);
+        const googleClientId= req.session.passport.user.google_client_id;
         var themeThis= "none";
         getThemeById(googleClientId)
         .then(theme => {
             // console.log("Strategies:", strategies);
             themeThis= theme;
-            // console.log("Theme this:"+ themeThis);
-            res.render("Dashboard.ejs", {
+            console.log("Theme this:"+ themeThis);
+            res.render("Portfolio.ejs", 
+            {
                 theme: themeThis,
-                PageTitle: "Dashboard",
+                PageTitle: "Portfolio",
                 Name: "Piyush",
-                DateBought: formattedDate,
-                DayBought: dayNames[dayy],
-                TypePosOrHold: "P&L",
-                PAndL: "+2500.00",
-                TotStrats: 5,
-                TotPos: 7,
-                TotHolds: 59,
-                Amount: "+2980.50"
+                PAndL: "50,000",
+                BestStrat: "Trendline",
+                NumTrads: 23,
+                TotBrokerage: "20,000",
             });
         })
         .catch(err => {
             console.error("Error:", err);
-        });    
-})
-
-app.get("/Portfolio", (req, res)=>{
-    const googleClientId= "2vsdf12";
-    var themeThis= "none";
-    getThemeById(googleClientId)
-    .then(theme => {
-        // console.log("Strategies:", strategies);
-        themeThis= theme;
-        console.log("Theme this:"+ themeThis);
-        res.render("Portfolio.ejs", 
-        {
-            theme: themeThis,
-            PageTitle: "Portfolio",
-            Name: "Piyush",
-            PAndL: "50,000",
-            BestStrat: "Trendline",
-            NumTrads: 23,
-            TotBrokerage: "20,000",
         });
-    })
-    .catch(err => {
-        console.error("Error:", err);
-    });
+    } else {
+        res.redirect("/Home")
+    }
 })
 
 app.get("/Positions", (req, res)=>
 { 
-    //! Check for new Positions bought, add them to DB. 
-    //! Check if it is equity/future etc and add to total number
-    //! Add to calendar equity/futures for the day
-    //! Add in total brokerage
-    //! Add in total brokerage
-    //! If max profit, update also best day for trading, best strategy, best Lot Size
-    //! Check if max loss
-    // const items = ['Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5', 'Item 6', 'Item 7','Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5', 'Item 6', 'Item 7','Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5', 'Item 6', 'Item 7','Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5', 'Item 6', 'Item 7'];
-    
-    const options = {
-        method: 'GET',
-        url: 'https://api.dhan.co/positions',
-        headers: {'access-token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzEzODc0NTY2LCJ0b2tlbkNvbnN1bWVyVHlwZSI6IlNFTEYiLCJ3ZWJob29rVXJsIjoiIiwiZGhhbkNsaWVudElkIjoiMTEwMDY4NzY5NyJ9.d2Bu7gDAE5u7WPT-VQ4LAq-stLgSNKHOB92aXSFZNCUQkRa9x5sB5c9XA6rHXzUTYstm-qENS5ijVUIMH1et1g', Accept: 'application/json'}
-    };
-    
-    var items= []
-    request(options, function (error, response, body) {
-        console.log(JSON.parse(body));
-        if (error) throw new Error(error);
-        items= JSON.parse(body);
-        if(items.length == 0)
-        {
-            items= []
-        }
-        else
-            items= items.concat(JSON.parse(body));
-        items= JSON.parse(body);
-
-        var hasRecording = new Boolean(0);
-        const googleClientId= "2vsdf12";
-        var themeThis= "none";
-        getThemeById(googleClientId)
-        .then(theme => {
-            // console.log("Strategies:", strategies);
-            themeThis= theme;
-            // console.log("Theme this:"+ themeThis);
-            res.render("Positions.ejs", 
-            {
-                theme: themeThis,
-                PageTitle: "Positions",
-                Name: "Piyush",
-                list: items, 
-                isavailable: hasRecording
-            });
-        })
-        .catch(err => {
-            console.error("Error:", err);
-        });
+    if(req.isAuthenticated()) {
+        //! Check for new Positions bought, add them to DB. 
+        //! Check if it is equity/future etc and add to total number
+        //! Add to calendar equity/futures for the day
+        //! Add in total brokerage
+        //! Add in total brokerage
+        //! If max profit, update also best day for trading, best strategy, best Lot Size
+        //! Check if max loss
+        // const items = ['Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5', 'Item 6', 'Item 7','Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5', 'Item 6', 'Item 7','Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5', 'Item 6', 'Item 7','Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5', 'Item 6', 'Item 7'];
+        console.log("Position me: "+ req.session.passport.user.google_client_id);
+        const options = {
+            method: 'GET',
+            url: 'https://api.dhan.co/positions',
+            headers: {'access-token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzEzODc0NTY2LCJ0b2tlbkNvbnN1bWVyVHlwZSI6IlNFTEYiLCJ3ZWJob29rVXJsIjoiIiwiZGhhbkNsaWVudElkIjoiMTEwMDY4NzY5NyJ9.d2Bu7gDAE5u7WPT-VQ4LAq-stLgSNKHOB92aXSFZNCUQkRa9x5sB5c9XA6rHXzUTYstm-qENS5ijVUIMH1et1g', Accept: 'application/json'}
+        };
         
-       
-    });
+        var items= []
+        request(options, function (error, response, body) {
+            console.log(JSON.parse(body));
+            if (error) throw new Error(error);
+            items= JSON.parse(body);
+            if(items.length == 0)
+            {
+                items= []
+            }
+            else
+                items= items.concat(JSON.parse(body));
+            items= JSON.parse(body);
 
-    
+            var hasRecording = new Boolean(0);
+            const googleClientId= req.session.passport.user.google_client_id;
+            var themeThis= "none";
+            getThemeById(googleClientId)
+            .then(theme => {
+                // console.log("Strategies:", strategies);
+                themeThis= theme;
+                // console.log("Theme this:"+ themeThis);
+                res.render("Positions.ejs", 
+                {
+                    theme: themeThis,
+                    PageTitle: "Positions",
+                    Name: "Piyush",
+                    list: items, 
+                    isavailable: hasRecording
+                });
+            })
+            .catch(err => {
+                console.error("Error:", err);
+            });
+            
+        
+        });
+
+    } else {
+        res.redirect("/Home")
+    }    
 })
 
 app.get("/Holdings", (req, res)=>{
     
-    var items= []
+    if(req.isAuthenticated()) {
+        var items= []
     
-    const options = {
-        method: 'GET',
-        url: 'https://api.dhan.co/holdings',
-        headers: {'access-token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzEzODc0NTY2LCJ0b2tlbkNvbnN1bWVyVHlwZSI6IlNFTEYiLCJ3ZWJob29rVXJsIjoiIiwiZGhhbkNsaWVudElkIjoiMTEwMDY4NzY5NyJ9.d2Bu7gDAE5u7WPT-VQ4LAq-stLgSNKHOB92aXSFZNCUQkRa9x5sB5c9XA6rHXzUTYstm-qENS5ijVUIMH1et1g', Accept: 'application/json'}
-    };
+        const options = {
+            method: 'GET',
+            url: 'https://api.dhan.co/holdings',
+            headers: {'access-token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzEzODc0NTY2LCJ0b2tlbkNvbnN1bWVyVHlwZSI6IlNFTEYiLCJ3ZWJob29rVXJsIjoiIiwiZGhhbkNsaWVudElkIjoiMTEwMDY4NzY5NyJ9.d2Bu7gDAE5u7WPT-VQ4LAq-stLgSNKHOB92aXSFZNCUQkRa9x5sB5c9XA6rHXzUTYstm-qENS5ijVUIMH1et1g', Accept: 'application/json'}
+        };
 
-    
-    request(options, function (error, response, body) {
-        if (error) throw new Error(error);
-        console.log(JSON.parse(body));
-        if(JSON.parse(body).httpStatus ==  "BAD_REQUEST")
-        {
-            items= []
-        }
-        else
-            items= items.concat(JSON.parse(body));
-        // items.push({
-        //     "dhanClientId": "12456466",
-        //     "tradingSymbol": "TVS ke stocks",
-        //     "securityId": "567132",
-        //     "positionType": "LONG",
-        //     "exchangeSegment": "NSE_EQ",
-        //     "productType": "CNC",
-        //     "buyAvg": 0,
-        //     "costPrice": 0,
-        //     "buyQty": 0,
-        //     "sellAvg": 0,
-        //     "sellQty": 0,
-        //     "netQty": 0,
-        //     "realizedProfit": 0,
-        //     "unrealizedProfit": 0,
-        //     "rbiReferenceRate": 0,
-        //     "multiplier": 0,
-        //     "carryForwardBuyQty": 0,
-        //     "carryForwardSellQty": 0,
-        //     "carryForwardBuyValue": 0,
-        //     "carryForwardSellValue": 0,
-        //     "dayBuyQty": 0,
-        //     "daySellQty": 0,
-        //     "dayBuyValue": 0,
-        //     "daySellValue": 0,
-        //     "drvExpiryDate": "string",
-        //     "drvOptionType": "CALL",
-        //     "drvStrikePrice": 0,
-        //     "crossCurrency": true
-        // });
-
-        var hasRecording = new Boolean(0);
-        const googleClientId= "2vsdf12";
-        var themeThis= "none";
-        getThemeById(googleClientId)
-        .then(theme => {
-            // console.log("Strategies:", strategies);
-            themeThis= theme;
-            // console.log("Theme this:"+ themeThis);
-            res.render("Holdings.ejs", 
-            {
-                theme: themeThis,
-                PageTitle: "Holdings",
-                Name: "Piyush",
-                list: items, 
-                isavailable: hasRecording
-            });
-        })
-        .catch(err => {
-            console.error("Error:", err);
-        });
         
-    });
-  
-    
+        request(options, function (error, response, body) {
+            if (error) throw new Error(error);
+            console.log(JSON.parse(body));
+            if(JSON.parse(body).httpStatus ==  "BAD_REQUEST")
+            {
+                items= []
+            }
+            else
+                items= items.concat(JSON.parse(body));
+            // items.push({
+            //     "dhanClientId": "12456466",
+            //     "tradingSymbol": "TVS ke stocks",
+            //     "securityId": "567132",
+            //     "positionType": "LONG",
+            //     "exchangeSegment": "NSE_EQ",
+            //     "productType": "CNC",
+            //     "buyAvg": 0,
+            //     "costPrice": 0,
+            //     "buyQty": 0,
+            //     "sellAvg": 0,
+            //     "sellQty": 0,
+            //     "netQty": 0,
+            //     "realizedProfit": 0,
+            //     "unrealizedProfit": 0,
+            //     "rbiReferenceRate": 0,
+            //     "multiplier": 0,
+            //     "carryForwardBuyQty": 0,
+            //     "carryForwardSellQty": 0,
+            //     "carryForwardBuyValue": 0,
+            //     "carryForwardSellValue": 0,
+            //     "dayBuyQty": 0,
+            //     "daySellQty": 0,
+            //     "dayBuyValue": 0,
+            //     "daySellValue": 0,
+            //     "drvExpiryDate": "string",
+            //     "drvOptionType": "CALL",
+            //     "drvStrikePrice": 0,
+            //     "crossCurrency": true
+            // });
+
+            var hasRecording = new Boolean(0);
+            const googleClientId= req.session.passport.user.google_client_id;
+            var themeThis= "none";
+            getThemeById(googleClientId)
+            .then(theme => {
+                // console.log("Strategies:", strategies);
+                themeThis= theme;
+                // console.log("Theme this:"+ themeThis);
+                res.render("Holdings.ejs", 
+                {
+                    theme: themeThis,
+                    PageTitle: "Holdings",
+                    Name: "Piyush",
+                    list: items, 
+                    isavailable: hasRecording
+                });
+            })
+            .catch(err => {
+                console.error("Error:", err);
+            });
+            
+        });
+
+    } else {
+        res.redirect("/Home")
+    }    
 })
 
 app.get("/Overview-Report", (req, res)=>{
-    var themeThis= "none";
-    const googleClientId= "2vsdf12";
-        getThemeById(googleClientId)
-        .then(theme => {
-            // console.log("Strategies:", strategies);
-            themeThis= theme;
-            res.render("Overview-Report.ejs", 
-            {
-                theme: themeThis,
-                PageTitle: "Overview Report",
-                Name: "Piyush",
-                AccBalance: "12,340.5",
-                CumRet: "120.5",
-                NonCumRet: "230.5",
-                DaiRet: "1,340.5",
-                RetWin: "1,234.5",
-                RetLoss: "2,300",
-                BigPro: "2,300",
-                BigLoss: "120"
+
+    if(req.isAuthenticated()) {
+        var themeThis= "none";
+        const googleClientId= req.session.passport.user.google_client_id;
+            getThemeById(googleClientId)
+            .then(theme => {
+                // console.log("Strategies:", strategies);
+                themeThis= theme;
+                res.render("Overview-Report.ejs", 
+                {
+                    theme: themeThis,
+                    PageTitle: "Overview Report",
+                    Name: "Piyush",
+                    AccBalance: "12,340.5",
+                    CumRet: "120.5",
+                    NonCumRet: "230.5",
+                    DaiRet: "1,340.5",
+                    RetWin: "1,234.5",
+                    RetLoss: "2,300",
+                    BigPro: "2,300",
+                    BigLoss: "120"
+                });
+            })
+            .catch(err => {
+                console.error("Error:", err);
             });
-        })
-        .catch(err => {
-            console.error("Error:", err);
-        });
-    
+    } else {
+        res.redirect("/Home")
+    }    
 })
 
 app.get("/Setup-Report", (req, res)=>{
-    var themeThis= "none";
-    const googleClientId= "2vsdf12";
-        getThemeById(googleClientId)
-        .then(theme => {
-            // console.log("Strategies:", strategies);
-            themeThis= theme;
-            res.render("Setup-Report.ejs", 
-            {
-                theme: themeThis,
-                PageTitle: "Setup Report",
-                Name: "Piyush",
-                BestStrats: "Trendline",
-                BestTimeSlot: "Morning",
-                BestDay: "Monday",
-                BestLot: 20000,
-                BigPro: 2300,
-                BigLoss: 120
+
+    if(req.isAuthenticated()) {
+        var themeThis= "none";
+        const googleClientId= req.session.passport.user.google_client_id;
+            getThemeById(googleClientId)
+            .then(theme => {
+                // console.log("Strategies:", strategies);
+                themeThis= theme;
+                res.render("Setup-Report.ejs", 
+                {
+                    theme: themeThis,
+                    PageTitle: "Setup Report",
+                    Name: "Piyush",
+                    BestStrats: "Trendline",
+                    BestTimeSlot: "Morning",
+                    BestDay: "Monday",
+                    BestLot: 20000,
+                    BigPro: 2300,
+                    BigLoss: 120
+                });
+            })
+            .catch(err => {
+                console.error("Error:", err);
             });
-        })
-        .catch(err => {
-            console.error("Error:", err);
-        });
-    
+    } else {
+        res.redirect("/Home")
+    }    
 })
 
 app.get("/ShareLog-Analysis", (req, res)=>{
-    var themeThis= "none";
-    const googleClientId= "2vsdf12";
-        getThemeById(googleClientId)
-        .then(theme => {
-            themeThis= theme;
-            res.render("ShareLog-Analysis.ejs", 
-            {
-                theme: themeThis,
-                PageTitle: "Analysis",
-                Name: "Piyush",
-                BestStrats: "Trendline",
-                BestTimeSlot: "Morning",
-                BestDay: "Monday",
-                BestLot: 20000,
-                BigPro: 2300,
-                BigLoss: 120
+
+    if(req.isAuthenticated()) {
+        var themeThis= "none";
+        const googleClientId= req.session.passport.user.google_client_id;
+            getThemeById(googleClientId)
+            .then(theme => {
+                themeThis= theme;
+                res.render("ShareLog-Analysis.ejs", 
+                {
+                    theme: themeThis,
+                    PageTitle: "Analysis",
+                    Name: "Piyush",
+                    BestStrats: "Trendline",
+                    BestTimeSlot: "Morning",
+                    BestDay: "Monday",
+                    BestLot: 20000,
+                    BigPro: 2300,
+                    BigLoss: 120
+                });
+            })
+            .catch(err => {
+                console.error("Error:", err);
             });
-        })
-        .catch(err => {
-            console.error("Error:", err);
-        });
-    
+
+    } else {
+        res.redirect("/Home")
+    }    
 })
 
 async function getStrategiesByClientId(googleClientId) {
@@ -455,34 +600,42 @@ async function getStrategiesByClientId(googleClientId) {
 
 app.get("/Strategies", (req, res)=>{
     
-    var items= [];
-    const googleClientId= "2vsdf12";
-    // const googleClientId= req.session.googleClientId;
-    getStrategiesByClientId(googleClientId)
-    .then(strategies => {
-        items= strategies;
-        var themeThis= "none";
-        getThemeById(googleClientId)
-        .then(theme => {
-            themeThis= theme;
-            res.render("Strategies.ejs", 
-            {
-                theme: themeThis,
-                PageTitle: "Strategies",
-                Name: "Piyush",
-                list: items
+    if(req.isAuthenticated()) {
+        var items= [];
+        const googleClientId= req.session.passport.user.google_client_id;
+        // const googleClientId= req.session.googleClientId;
+        getStrategiesByClientId(googleClientId)
+        .then(strategies => {
+            items= strategies;
+            var themeThis= "none";
+            getThemeById(googleClientId)
+            .then(theme => {
+                themeThis= theme;
+                res.render("Strategies.ejs", 
+                {
+                    theme: themeThis,
+                    PageTitle: "Strategies",
+                    Name: "Piyush",
+                    list: items
+                });
+            })
+            .catch(err => {
+                console.error("Error:", err);
             });
         })
         .catch(err => {
             console.error("Error:", err);
         });
-    })
-    .catch(err => {
-        console.error("Error:", err);
-    });
+
+    } else {
+        res.redirect("/Home")
+    }
+
+    
     
 })
 app.post("/Strategies", async (req, res) => {
+
     // console.log(req.body);
     newStrat= req.body.Strat;
     newDesc= req.body.Descr;
@@ -492,7 +645,7 @@ app.post("/Strategies", async (req, res) => {
     
     else {
     
-        const googleClientId= "2vsdf12";
+        const googleClientId= req.session.passport.user.google_client_id;
         const strategyName = newStrat; 
 
         try {
@@ -518,7 +671,7 @@ app.post("/Strategies", async (req, res) => {
 })
 
 app.post("/del-strategy", async function (req, res) {
-    const googleClientId= "2vsdf12";
+    const googleClientId= req.session.passport.user.google_client_id;
     const strategyToDelete= req.body.submitStrat;
     // console.log(strategyToDelete);
     try {
@@ -557,39 +710,43 @@ async function getThemeById(googleClientId) {
 }
 
 app.get("/Profile", (req, res)=>{
-    var themeThis= "none";
-    const googleClientId= "2vsdf12";
-    // const googleClientId= req.session.googleClientId;
-    getThemeById(googleClientId)
-    .then(theme => {
-        // console.log("Strategies:", strategies);
-        themeThis= theme;
-        console.log("Theme this:"+ themeThis);
-        res.render("Profile.ejs", 
-        {
-            theme: themeThis,
-            PageTitle: "Profile",
-            Name: "Piyush",
-            imgSrc: "/test-images/piyush.jpg",
-            fullName: "Piyush Khanna",
-            dhanClientID: "678-32-23432-1",
-            HQClientID: "2004-2813-cd-12",
-            userEmail: "piyushkhannavb@gmail.com",
-            userContact: "+91 8439363900",
-            accType: "Trial",
-            endDate: "20th Sept, 2069"
+    if(req.isAuthenticated()) {
+        var themeThis= "none";
+        const googleClientId= req.session.passport.user.google_client_id;
+        // const googleClientId= req.session.googleClientId;
+        getThemeById(googleClientId)
+        .then(theme => {
+            // console.log("Strategies:", strategies);
+            themeThis= theme;
+            console.log("Theme this:"+ themeThis);
+            res.render("Profile.ejs", 
+            {
+                theme: themeThis,
+                PageTitle: "Profile",
+                Name: "Piyush",
+                imgSrc: "/test-images/piyush.jpg",
+                fullName: "Piyush Khanna",
+                dhanClientID: "678-32-23432-1",
+                HQClientID: "2004-2813-cd-12",
+                userEmail: "piyushkhannavb@gmail.com",
+                userContact: "+91 8439363900",
+                accType: "Trial",
+                endDate: "20th Sept, 2069"
+            });
+        })
+        .catch(err => {
+            console.error("Error:", err);
         });
-    })
-    .catch(err => {
-        console.error("Error:", err);
-    });
+    } else {
+        res.redirect("/Home")
+    }
 });
 
 app.post('/toggle', async function (req, res) {
     const dataReceived = req.body;
     console.log(dataReceived);
     const theme = dataReceived.theme;
-    const clientId= "2vsdf12";
+    const clientId= req.session.passport.user.google_client_id;
     console.log(typeof(dataReceived.theme));
     try {
         
@@ -630,35 +787,52 @@ app.get("/Home", (req, res)=>{
 })
 
 app.get("/Welcome", (req, res)=>{
-    res.render("Welcome.ejs");
+    res.render("Welcome.ejs", 
+    {
+        username: req.session.passport.user.name,
+        mail: req.session.passport.user.email
+    });
 })
 
-app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile'] }));
+app.post("/welcome", async function (req, res) {
+    console.log("Change karne ki request aayi hai bhancho: ")
+    console.log(req.body); 
+    try {
+        const doc = await User.findOne({ google_client_id: req.session.passport.user.google_client_id });
 
-app.get('/auth/google/ShareLog', 
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  function(req, res) {
-    // Successful authentication, redirect home.
-    const googleClientId = req.user.googleClientId; // Assuming req.user contains user data from authentication
-    req.session.googleClientId = googleClientId;
-    res.redirect('/');
-  });
-
-app.get('/auth/google/callback', (req, res) => {
-    const googleClientId = req.user.googleClientId; // Assuming req.user contains user data from authentication
-    req.session.googleClientId = googleClientId;
-    // Redirect or perform other actions after authentication
-});
-
-app.get("/Login", function(req, res) {
-    if(req.isAuthenticated()) {
-        console.log("Apna hi launda hai.")
-        res.redirect("/")
-    } else {
-        res.render("Login")
+        // If document is found, update its 'zerodha_id'
+        if (doc) {
+            doc.dhan_key= req.body.dhanClientId;
+            doc.zerodha_key = req.body.hqClientId; 
+            doc.contact = req.body.contactNumber;
+            doc.period= req.body.accountType;
+            if(req.body.name.length > 0) {
+                doc.name= req.body.name;
+            }
+            if(req.body.email.length > 0) {
+                doc.email= req.body.email;
+            }
+            await doc.save(); // Save the changes
+            console.log("Successfully updated 'zerodha_id' for google_id:");
+        } else {
+            console.log("Document with google_id not found.");
+        }
+    } catch (error) {
+        console.error("Error updating 'zerodha_id':", error);
     }
-}) 
+    //! If req.body.accountType == permanent => redirect to buy page, else dashboard
+    res.redirect("/Dashboard")
+})
+
+
+// app.get("/Login", function(req, res) {
+//     if(req.isAuthenticated()) {
+//         console.log("Apna hi launda hai.")
+//         res.redirect("/")
+//     } else {
+//         res.render("Login")
+//     }
+// }) 
 
 
 app.listen(port, ()=>{

@@ -24,11 +24,6 @@
 "31 March, 2024:"
 
 %% FULFILLED 
->. Home page
->. Dashboard authentication
->. Sign up page
->. Sign up page
->. Welcome page
 >. Welcome integrated with backend
 >. 3 separate sections for reports
 >>> On pause till server hosting
@@ -42,28 +37,53 @@
 >. Session maintainence using google client
 >. QA
 
+-----------------------------------------------------------------------------
+
+"4 April, 2024:"
+
+%% FULFILLED
+>. Dashboard authentication
+>. Home page
+>. Sign in page
+>. Sign up page
+>. Welcome page
+>. Welcome integrated with backend
+>. Overview Report page
+>. Sharelog Analysis
+>. Store chart data on mongo
+>. Session maintainence using google client
+>. Test Data APIs on 1 April
+>>> On pause till server hosting
+
+%% NEXT TASKS:
+>. Website Hosting
+>. Add text with speech, change respective architecture
+>. Generate charts
+>. QA
+
 %%TENTATIVE ACTION PLAN
 31 March, 24:
 >. Setup charts, light theme, logo 
 
-1 April, 24:
+4 April, 24:
+TECHNICAL
 >. Work on light theme
 >. Logo assembly
 >. Setup charts page creation
->. Data APIs test and Integration
->. Charts storing
+X. Data APIs test and Integration
+X. Charts storing
 >. Speech and text addition
 
-2 April, 24:
+MANAGERIAL
 >. Payment of 10k
 >. Server hosting
 
-3 April, 24:
->. Fill info with specific gmail account settings
->. Buy page and razorpay gateway integration
->. Google Session maintainence work
+5 April, 24:
+X. Fill info with specific gmail account settings
+>. 'Buy Premium' page and razorpay gateway integration
+X. Google Session maintainence work
 >. Sign up pages integration
 >. End date of trial period integration
 
-4 April, 24:
+6 April, 24:
 >. Rest of the payment: 5k

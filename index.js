@@ -44,7 +44,9 @@ const userSchema = new mongoose.Schema({
     theme: String,
     dhan_key: String,
     zerodha_key: String,
+    razorpay_id: String,
     period: String,
+    start_day: String,
     Total_Positions: Number,
     Total_Holdings: Number,
     Total_Equities: Number,
@@ -80,6 +82,12 @@ async function findUserByGoogleClientId(googleClientId) {
   }
 
 async function createUser(data) {
+    const today = new Date();
+    const day = today.getDate();
+    const month = today.getMonth() + 1; // January is 0!
+    const year = today.getFullYear();
+    const formattedToday = `${day < 10 ? '0' : ''}${day}-${month < 10 ? '0' : ''}${month}-${year}`;
+
     try {
         const newUser = new User({
             google_client_id: data.google_client_id,
@@ -90,7 +98,9 @@ async function createUser(data) {
             theme: "dark",
             dhan_key: "",
             zerodha_key: "",
+            razorpay_id: "",
             period: "trial",
+            start_day: formattedToday,
             Total_Positions: 0,
             Total_Holdings: 0,
             Total_Equities: 0,
@@ -258,9 +268,52 @@ app.get("/", function(req, res) {
     }
 })
 
+app.post("/razorpayCallback", async function (req, res) {
+    console.log(req.body.razorpay_payment_id);
+    try {
+        const doc = await User.findOne({ google_client_id: req.session.passport.user.google_client_id });
+
+        if (doc) {
+            doc.razorpay_id= req.body.razorpay_payment_id;
+            doc.period= "permanent";
+            await doc.save(); // Save the changes
+            console.log("Successfully updated 'razorpay id'");
+        } else {
+            console.log("Document with google_id not found.");
+        }
+    } catch (error) {
+        console.error("Error updating 'zerodha_id':", error);
+    }
+    res.redirect("/Dashboard")
+})
+
+function getDateObjectFromString(dateString) {
+    // Split the date string into day, month, and year
+    const [day, month, year] = dateString.split('-').map(Number);
+
+    // Create a new Date object with the given day, month, and year
+    return new Date(year, month - 1, day);
+}
+
 app.get("/Dashboard", (req, res)=>{
 
     if(req.isAuthenticated()) {
+        const ttoday = new Date();
+        const tday = ttoday.getDate();
+        const tmonth = ttoday.getMonth() + 1; // January is 0!
+        const tyear = ttoday.getFullYear();
+
+        // Format today's date as DD-MM-YYYY
+        const tformattedToday = `${tday < 10 ? '0' : ''}${tday}-${tmonth < 10 ? '0' : ''}${tmonth}-${tyear}`;
+
+        const date1 = getDateObjectFromString(req.session.passport.user.start_day);
+        const date2 = getDateObjectFromString(tformattedToday);
+
+        const differenceInMilliseconds = Math.abs(date1 - date2);
+        const differenceInDays = 14- Math.ceil(differenceInMilliseconds / (1000 * 60 * 60 * 24));
+
+        console.log(`Days left= ${differenceInDays}`);
+
 
         const currentDate = new Date();
         const monthNames = [
@@ -293,6 +346,7 @@ app.get("/Dashboard", (req, res)=>{
                 // console.log("Theme this:"+ themeThis);
                 res.render("Dashboard.ejs", {
                     theme: themeThis,
+                    imgSrc: req.session.passport.user.profile_pic,
                     PageTitle: "Dashboard",
                     Name: req.session.passport.user.name.split(" ")[0],
                     DateBought: formattedDate,
@@ -329,6 +383,7 @@ app.get("/Portfolio", (req, res)=>{
             res.render("Portfolio.ejs", 
             {
                 theme: themeThis,
+                imgSrc: req.session.passport.user.profile_pic,
                 PageTitle: "Portfolio",
                 Name: req.session.passport.user.name.split(" ")[0],
                 PAndL: "50,000",
@@ -387,6 +442,7 @@ app.get("/Positions", (req, res)=>
                 res.render("Positions.ejs", 
                 {
                     theme: themeThis,
+                    imgSrc: req.session.passport.user.profile_pic,
                     PageTitle: "Positions",
                     Name: req.session.passport.user.name.split(" ")[0],
                     list: items, 
@@ -468,6 +524,7 @@ app.get("/Holdings", (req, res)=>{
                 res.render("Holdings.ejs", 
                 {
                     theme: themeThis,
+                    imgSrc: req.session.passport.user.profile_pic,
                     PageTitle: "Holdings",
                     Name: req.session.passport.user.name.split(" ")[0],
                     list: items, 
@@ -497,6 +554,7 @@ app.get("/Overview-Report", (req, res)=>{
                 res.render("Overview-Report.ejs", 
                 {
                     theme: themeThis,
+                    imgSrc: req.session.passport.user.profile_pic,
                     PageTitle: "Overview Report",
                     Name: req.session.passport.user.name.split(" ")[0],
                     AccBalance: "12,340.5",
@@ -529,6 +587,7 @@ app.get("/Setup-Report", (req, res)=>{
                 res.render("Setup-Report.ejs", 
                 {
                     theme: themeThis,
+                    imgSrc: req.session.passport.user.profile_pic,
                     PageTitle: "Setup Report",
                     Name: req.session.passport.user.name.split(" ")[0],
                     BestStrats: "Trendline",
@@ -558,6 +617,7 @@ app.get("/ShareLog-Analysis", (req, res)=>{
                 res.render("ShareLog-Analysis.ejs", 
                 {
                     theme: themeThis,
+                    imgSrc: req.session.passport.user.profile_pic,
                     PageTitle: "Analysis",
                     Name: req.session.passport.user.name.split(" ")[0],
                     BestStrats: "Trendline",
@@ -614,6 +674,7 @@ app.get("/Strategies", (req, res)=>{
                 res.render("Strategies.ejs", 
                 {
                     theme: themeThis,
+                    imgSrc: req.session.passport.user.profile_pic,
                     PageTitle: "Strategies",
                     Name: req.session.passport.user.name.split(" ")[0],
                     list: items
@@ -816,7 +877,6 @@ app.post("/welcome", async function (req, res) {
             doc.dhan_key= req.body.dhanClientId;
             doc.zerodha_key = req.body.hqClientId; 
             doc.contact = req.body.contactNumber;
-            doc.period= req.body.accountType;
             if(req.body.name.length > 0) {
                 doc.name= req.body.name;
             }
@@ -832,19 +892,16 @@ app.post("/welcome", async function (req, res) {
         console.error("Error updating 'zerodha_id':", error);
     }
     //! If req.body.accountType == permanent => redirect to buy page, else dashboard
-    res.redirect("/Dashboard")
+    if(req.body.accountType == "permanent") {
+        res.redirect("/Buy")
+    } else {
+        res.redirect("/Dashboard")
+    }
 })
 
-
-// app.get("/Login", function(req, res) {
-//     if(req.isAuthenticated()) {
-//         console.log("Apna hi launda hai.")
-//         res.redirect("/")
-//     } else {
-//         res.render("Login")
-//     }
-// }) 
-
+app.get("/Buy", function (req, res) {
+    res.render("Buy.ejs")
+})
 
 app.listen(port, ()=>{
     console.log(`server running on port: ${port}`)

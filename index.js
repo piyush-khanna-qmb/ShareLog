@@ -576,34 +576,43 @@ app.get("/Overview-Report", (req, res)=>{
 })
 
 app.get("/Setup-Report", (req, res)=>{
-
     if(req.isAuthenticated()) {
-        var themeThis= "none";
+        console.log("Profile me: "+ req.session.passport.user.google_client_id);
         const googleClientId= req.session.passport.user.google_client_id;
-            getThemeById(googleClientId)
-            .then(theme => {
-                // console.log("Strategies:", strategies);
-                themeThis= theme;
-                res.render("Setup-Report.ejs", 
-                {
-                    theme: themeThis,
-                    imgSrc: req.session.passport.user.profile_pic,
-                    PageTitle: "Setup Report",
-                    Name: req.session.passport.user.name.split(" ")[0],
-                    BestStrats: "Trendline",
-                    BestTimeSlot: "Morning",
-                    BestDay: "Monday",
-                    BestLot: 20000,
-                    BigPro: 2300,
-                    BigLoss: 120
-                });
-            })
-            .catch(err => {
-                console.error("Error:", err);
+        var themeThis= "none";
+
+        let data= [
+            ["Monday", "12-04-2024", 12, 12, 12, 12, 12, 12, 12, 12],
+            ["Tuesday", "13-04-2024", 12, 13, 15, 2, 12, 12, 12, 12],
+            ["Wednesday", "14-04-2024",  12, 12, 52, 12, 12, 12, 12, 12],
+            ["Thursday", "15-04-2024", 12, 62, 12, 12, 12, 12, 12, 12],
+            ["Friday", "16-04-2024", 12, 32, 12, 12, 16, 12, 12, 12]
+        ]
+
+        getThemeById(googleClientId)
+        .then(theme => {
+            // console.log("Strategies:", strategies);
+            themeThis= theme;
+            console.log("Theme this:"+ themeThis);
+            res.render("Setup-Report.ejs", 
+            {
+                theme: themeThis,
+                imgSrc: req.session.passport.user.profile_pic,
+                PageTitle: "Setup-Report",
+                data: data,
+                Name: req.session.passport.user.name.split(" ")[0],
+                PAndL: "50,000",
+                BestStrat: "Trendline",
+                NumTrads: 23,
+                TotBrokerage: "20,000",
             });
+        })
+        .catch(err => {
+            console.error("Error:", err);
+        });
     } else {
         res.redirect("/Home")
-    }    
+    }
 })
 
 app.get("/ShareLog-Analysis", (req, res)=>{

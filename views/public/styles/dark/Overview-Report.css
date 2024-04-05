@@ -21,12 +21,22 @@
     font-size: small;
 }
 #options{
-    background-color: rgb(23, 24, 25);
     color: white;
+    background-color: rgb(23, 24, 25); 
+    padding: 0.4rem;
+    border-width: 0.2rem;
+    border-radius: 0.2rem;
+    border-color: rgb(23, 24, 25);
+    opacity: 0.7;
 }
 #from-datePicker{
-    background-color: rgb(23, 24, 25);
     color: white;
+    background-color: rgb(23, 24, 25); 
+    padding: 0.3rem;
+    border-width: 0.2rem;
+    border-radius: 0.2rem;
+    border-color: rgb(23, 24, 25);
+    opacity: 0.7;
 }
 #from-datePicker::-webkit-calendar-picker-indicator {
     filter: invert(1); 
@@ -35,6 +45,11 @@
     /* Add a border */
     color: white;
     background-color: rgb(23, 24, 25); 
+    padding: 0.3rem;
+    border-width: 0.2rem;
+    border-radius: 0.2rem;
+    border-color: rgb(23, 24, 25);
+    opacity: 0.7;
   }
   #to-datePicker::-webkit-calendar-picker-indicator {
     filter: invert(1); /* Invert the color */
@@ -43,9 +58,7 @@
   #to-datePicker::-webkit-calendar-picker-popup {
     background-color: rgb(207, 41, 41); /* Set the background color */
   }
-#submit-button{
-    background-color: seagreen;
-}
+
 
 .newStrat {
     display: inline-block;

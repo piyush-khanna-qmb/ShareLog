@@ -35,6 +35,53 @@ mongoose
     console.log("Database Connected");
 });
 
+const chartSchema= new mongoose.Schema({
+    open: [Number],
+    high: [Number],
+    low: [Number],
+    close: [Number],
+    time: [Number]
+});
+
+const posSchema = new mongoose.Schema({
+    securityId: String,
+    tradingSymbol: String,
+    audioObject: String,
+    text: String,
+    posType: String,
+    segmentType: String,
+    costPrice: Number,
+    buyQty: Number,
+    profit: Number,
+    brokerage: Number,
+    drvExpiryDate: String,
+    chart: chartSchema,
+    dateOfBuy: String,
+    dayOfBuy: String,
+    strategyUsed: String
+})
+
+const holdSchema= new mongoose.Schema({
+    securityId: String,
+    tradingSymbol: String,
+    audioObject: String,
+    text: String,
+    ISIN: String,
+    buyQty: String,
+    inDepos: String,
+    availabelQty: Number,
+    avgCostPrice: Number
+})
+
+const calSchema = new mongoose.Schema({
+    date: String,
+    equity: Number,
+    fAndO: Number,
+    commodity: Number,
+    currency: Number,
+    balance: Number
+})
+
 const userSchema = new mongoose.Schema({
     google_client_id:  { type: String, unique: true, required: true },
     name: String,
@@ -61,15 +108,19 @@ const userSchema = new mongoose.Schema({
     Best_Strategy: String,
     Best_Lot_Size: Number,
     Strategies: [[String]],
-    // Positions: [], 
-    // Holdings: [],
-    // Calendar: []
+    curBalance: Number,
+    Positions: [posSchema], 
+    Holdings: [holdSchema],
+    Calendar: [calSchema],
+    NetPnL: Number
 });
 
 userSchema.plugin(passportLocalMongoose);
 userSchema.plugin(findOrCreate)
 
 const User = new mongoose.model("User", userSchema);
+const Position = new mongoose.model('Position', posSchema);
+const Calendar = new mongoose.model('Calender', calSchema);
 
 async function findUserByGoogleClientId(googleClientId) {
     try {
@@ -115,9 +166,11 @@ async function createUser(data) {
             Best_Strategy: "",
             Best_Lot_Size: 0,
             Strategies: [],
-            // Positions: [], 
-            // Holdings: [],
-            // Calendar: []
+            curBalance: 0,
+            Positions: [], 
+            Holdings: [],
+            Calendar: [],
+            NetPnL: 0
         });
 
         const savedUser = await newUser.save();
@@ -217,46 +270,6 @@ app.get("/logout", function (req, res) {
     });
 })
 
-// app.get("/tryUser", function (req, res) {
-//     var newUser= new User({
-//         google_client_id: req.session.passport.user.google_client_id,
-//         name: "Piyush Khanna",
-//         email: "piyushb@gmail",
-//         contact: 8755122371,
-//         profile_pic: "www.google.com",
-//         theme: "dark",
-//         dhan_key: "Dhan-cdsdcsd",
-//         zerodha_key: "Zero-csdcsdc",
-//         period: "permanent",
-//         Total_Positions: 321,
-//         Total_Holdings: 3222,
-//         Total_Equities: 3123,
-//         Total_FAndO: 22,
-//         Total_Currencies: 1,
-//         Total_Commodities: 121,
-//         Total_Trades: 2121,
-//         Total_Brokerage: 121, //- from unrealized profit
-//         Biggest_Profit: 21111,
-//         Biggest_Loss: 21,
-//         Best_Day_For_Trade: "Monday",
-//         Best_Strategy: "Trendline",
-//         Best_Lot_Size: 123123,
-//         Strategies: [["Trendline", "trend desc"], ["Khanna-Strat", "khanna-desc"]],
-//     });
-//     newUser.save()
-//     .then(function (models) {
-//         if(models) {
-//             // console.log("Added Successfully!");
-//             console.log("User saved");
-//             res.redirect("/");
-//         }
-//     })
-//     .catch( function (err) {
-//         console.log(err);
-//         res.send("Pehle se hi hai")
-//     });
-// })
-
 app.get("/", function(req, res) {
     console.log(req.user);
     if(req.isAuthenticated()) {
@@ -295,7 +308,7 @@ function getDateObjectFromString(dateString) {
     return new Date(year, month - 1, day);
 }
 
-app.get("/Dashboard", (req, res)=>{
+app.get("/Dashboard", async (req, res)=>{
 
     if(req.isAuthenticated()) {
         const ttoday = new Date();
@@ -327,8 +340,6 @@ app.get("/Dashboard", (req, res)=>{
         const year = currentDate.getFullYear();
         const dayy= currentDate.getDay();
         const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        console.log(req.session.passport.user.google_client_id);
-        console.log(req.session.passport.user.name);
         const formattedDate = `${day} ${monthNames[monthIndex]}, ${year}`;
 
         //! Get these data in real time from the API
@@ -337,31 +348,23 @@ app.get("/Dashboard", (req, res)=>{
             Type: Holdings hain ya Position
         */
 
-            const googleClientId= req.session.passport.user.google_client_id;
-            var themeThis= "none";
-            getThemeById(googleClientId)
-            .then(theme => {
-                // console.log("Strategies:", strategies);
-                themeThis= theme;
-                // console.log("Theme this:"+ themeThis);
-                res.render("Dashboard.ejs", {
-                    theme: themeThis,
-                    imgSrc: req.session.passport.user.profile_pic,
-                    PageTitle: "Dashboard",
-                    Name: req.session.passport.user.name.split(" ")[0],
-                    DateBought: formattedDate,
-                    DayBought: dayNames[dayy],
-                    TypePosOrHold: "P&L",
-                    PAndL: "+2500.00",
-                    TotStrats: 5,
-                    TotPos: 7,
-                    TotHolds: 59,
-                    Amount: "+2980.50"
-                });
-            })
-            .catch(err => {
-                console.error("Error:", err);
-            });    
+        const googleClientId= req.session.passport.user.google_client_id;
+        const user = await User.findOne({ google_client_id: googleClientId });
+        var themeThis= user.theme;
+        res.render("Dashboard.ejs", {
+            theme: themeThis,
+            imgSrc: req.session.passport.user.profile_pic,
+            PageTitle: "Dashboard",
+            Name: req.session.passport.user.name.split(" ")[0],
+            DateBought: formattedDate,
+            DayBought: dayNames[dayy],
+            TypePosOrHold: "P&L",
+            PAndL: Number(user.NetPnL).toFixed(2),
+            TotStrats: user.Strategies.length,
+            TotPos: user.Total_Positions,
+            TotHolds: user.Total_Holdings,
+            Amount: Number(user.NetPnL).toFixed(2)
+        });
 
     } else {
         console.log("Jabardasti ki entry");
@@ -369,92 +372,420 @@ app.get("/Dashboard", (req, res)=>{
     }
 })
 
-app.get("/Portfolio", (req, res)=>{
+app.get("/Portfolio", async (req, res)=>{
 
     if(req.isAuthenticated()) {
-        console.log("Profile me: "+ req.session.passport.user.google_client_id);
         const googleClientId= req.session.passport.user.google_client_id;
-        var themeThis= "none";
-        getThemeById(googleClientId)
-        .then(theme => {
-            // console.log("Strategies:", strategies);
-            themeThis= theme;
-            console.log("Theme this:"+ themeThis);
-            res.render("Portfolio.ejs", 
-            {
-                theme: themeThis,
-                imgSrc: req.session.passport.user.profile_pic,
-                PageTitle: "Portfolio",
-                Name: req.session.passport.user.name.split(" ")[0],
-                PAndL: "50,000",
-                BestStrat: "Trendline",
-                NumTrads: 23,
-                TotBrokerage: "20,000",
-            });
-        })
-        .catch(err => {
-            console.error("Error:", err);
+        const user = await User.findOne({ google_client_id: googleClientId });
+        var themeThis= user.theme;
+        var randStrat= "None";
+        if(user.Strategies.length > 0) {
+            const randomIndex = Math.floor(Math.random() * user.Strategies.length);
+            randStrat= user.Strategies[randomIndex][0];
+        }
+        res.render("Portfolio.ejs", 
+        {
+            theme: themeThis,
+            imgSrc: req.session.passport.user.profile_pic,
+            PageTitle: "Portfolio",
+            Name: req.session.passport.user.name.split(" ")[0],
+            PAndL: Number(user.NetPnL).toFixed(2),
+            BestStrat: randStrat,
+            NumTrads: user.Total_Trades,
+            equity: user.Total_Equities,
+            commodity: user.Total_Commodities,
+            currency: user.Total_Currencies,
+            fno: user.Total_FAndO,
+            TotBrokerage: Number(user.Total_Brokerage).toFixed(2),
         });
     } else {
         res.redirect("/Home")
     }
 })
 
-app.get("/Positions", (req, res)=>
+
+  async function addPositionIfNotExists(userId, positionData) {
+    try {
+        // Find the user by their ID
+        const user = await User.findOne({ google_client_id: userId });
+
+        // If user doesn't exist, handle accordingly
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        // Check if a position with the given securityID already exists for the user
+        const existingPosition = user.Positions.find(position => position.securityId === positionData.securityId);
+
+        // If position doesn't exist, create a new one and add it to the Positions array
+        if (!existingPosition) {
+            const newPosition = new Position(positionData);
+            user.Positions.push(newPosition);
+            await user.save();
+            console.log('New position added for user:', userId);
+        } else {
+            console.log('Position already exists for user:', userId);
+        }
+    } catch (error) {
+        console.error(error);
+        // Handle error
+    }
+}
+function getLocalDayName() {
+    const currentDate = new Date();
+    
+    // Options for formatting the date
+    const options = { weekday: 'long' };
+    
+    // Get the local day name using toLocaleDateString
+    return currentDate.toLocaleDateString('en-US', options);
+}
+
+function getLocalDate() {
+    const currentDate = new Date();
+    
+    const day = String(currentDate.getDate()).padStart(2, '0');
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0'); // Months are zero based
+    const year = currentDate.getFullYear();
+
+    return `${day}-${month}-${year}`;
+}
+
+app.get("/Positions", async(req, res)=>
 { 
     if(req.isAuthenticated()) {
         //! Check for new Positions bought, add them to DB. 
         //! Check if it is equity/future etc and add to total number
         //! Add to calendar equity/futures for the day
         //! Add in total brokerage
-        //! Add in total brokerage
         //! If max profit, update also best day for trading, best strategy, best Lot Size
         //! Check if max loss
         // const items = ['Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5', 'Item 6', 'Item 7','Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5', 'Item 6', 'Item 7','Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5', 'Item 6', 'Item 7','Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5', 'Item 6', 'Item 7'];
-        console.log("Position me: "+ req.session.passport.user.google_client_id);
-        const options = {
-            method: 'GET',
-            url: 'https://api.dhan.co/positions',
-            headers: {'access-token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzEzODc0NTY2LCJ0b2tlbkNvbnN1bWVyVHlwZSI6IlNFTEYiLCJ3ZWJob29rVXJsIjoiIiwiZGhhbkNsaWVudElkIjoiMTEwMDY4NzY5NyJ9.d2Bu7gDAE5u7WPT-VQ4LAq-stLgSNKHOB92aXSFZNCUQkRa9x5sB5c9XA6rHXzUTYstm-qENS5ijVUIMH1et1g', Accept: 'application/json'}
-        };
-        
-        var items= []
-        request(options, function (error, response, body) {
-            console.log(JSON.parse(body));
-            if (error) throw new Error(error);
-            items= JSON.parse(body);
-            if(items.length == 0)
-            {
-                items= []
-            }
-            else
-                items= items.concat(JSON.parse(body));
-            items= JSON.parse(body);
+        const googleClientId= req.session.passport.user.google_client_id;
 
-            var hasRecording = new Boolean(0);
-            const googleClientId= req.session.passport.user.google_client_id;
-            var themeThis= "none";
-            getThemeById(googleClientId)
-            .then(theme => {
-                // console.log("Strategies:", strategies);
-                themeThis= theme;
-                // console.log("Theme this:"+ themeThis);
-                res.render("Positions.ejs", 
-                {
-                    theme: themeThis,
-                    imgSrc: req.session.passport.user.profile_pic,
-                    PageTitle: "Positions",
-                    Name: req.session.passport.user.name.split(" ")[0],
-                    list: items, 
-                    isavailable: hasRecording
-                });
-            })
-            .catch(err => {
-                console.error("Error:", err);
+        try {
+                const user = await User.findOne({ google_client_id: googleClientId });
+                var accessToken= user.dhan_key;
+                console.log("Position me: "+ req.session.passport.user.google_client_id);
+                var options = {
+                    method: 'GET',
+                    url: 'https://api.dhan.co/positions',
+                    headers: {'access-token': accessToken, Accept: 'application/json'}
+                };
+                
+                var items= [];
+                var errorAayiThi= false;
+                request(options, function (error, response, body) {
+                    try {
+                        console.log(JSON.parse(body));
+                        console.log("Error: "+error);
+                        if (body.errorCode) 
+                            throw new Error(error);
+
+                        items= JSON.parse(body);
+                        if(items.length == 0) {
+                            items= []
+                        }
+                        else
+                            items= items.concat(JSON.parse(body));
+                        items= JSON.parse(body);
+
+                        const userId = user.google_client_id;
+                        for(const item of items) {
+                            console.log(item);
+
+                            const hoptions = {
+                                method: 'POST',
+                                url: 'https://api.dhan.co/charts/intraday',
+                                headers: {
+                                  'access-token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzEzODc0NTY2LCJ0b2tlbkNvbnN1bWVyVHlwZSI6IlNFTEYiLCJ3ZWJob29rVXJsIjoiIiwiZGhhbkNsaWVudElkIjoiMTEwMDY4NzY5NyJ9.d2Bu7gDAE5u7WPT-VQ4LAq-stLgSNKHOB92aXSFZNCUQkRa9x5sB5c9XA6rHXzUTYstm-qENS5ijVUIMH1et1g',
+                                  'Content-Type': 'application/json',
+                                  Accept: 'application/json'
+                                },
+                                body: {securityId: item.securityId, exchangeSegment: 'NSE_FNO', instrument: 'OPTIDX'},
+                                json: true
+                              };
+                              
+                              request(hoptions, function (error, response, hbody) {
+                                if (error) throw new Error(error);
+                              
+                                console.log(hbody);
+                                const existingPos = user.Positions.find(position => position.securityId === item.securityId);
+                                if(!existingPos) {
+                                    if(item.realizedProfit > user.Biggest_Profit) {
+                                        user.Biggest_Profit = item.realizedProfit;
+                                        user.Best_Day_For_Trade = getLocalDayName();
+                                        user.Best_Lot_Size = item.buyQty;
+                                    }
+                                    if(item.realizedProfit < user.Biggest_Loss) {
+                                        user.Biggest_Loss = item.realizedProfit;
+                                    }
+                                    user.Total_Positions = user.Total_Positions + 1;
+                                    user.Total_Trades = user.Total_Trades + 1;
+                                    user.Total_Brokerage = user.Total_Brokerage + Math.abs(item.unrealizedProfit);
+    
+                                    if(String(item.exchangeSegment).toLowerCase().includes("fno")) {
+                                        user.Total_FAndO = user.Total_FAndO + 1;
+                                    }
+                                    if(String(item.exchangeSegment).toLowerCase().includes("eq")) {
+                                        user.Total_Equities = user.Total_Equities + 1;
+                                    }
+                                    if(String(item.exchangeSegment).toLowerCase().includes("currency")) {
+                                        user.Total_Currencies = user.Total_Currencies + 1;
+                                    }
+                                    if(String(item.exchangeSegment).toLowerCase().includes("comm")) {
+                                        user.Total_Commodities = user.Total_Commodities + 1;
+                                    }
+                                }
+                                
+                                
+                                const equityToAdd= user.Total_Equities ;
+                                const commToAdd= user.Total_Commodities;
+                                const fnoToAdd= user.Total_FAndO ;
+                                const currToAdd= user.Total_Currencies;
+                                user.save();
+                                User.findOne({ google_client_id: googleClientId })
+                                .exec()
+                                .then(user => {
+                                    if (!user) {
+                                        console.log('User not found');
+                                        return;
+                                    }
+
+                                    // Find the document with the specified date
+                                    return Calendar.findOne({ date: getLocalDate() }).exec()
+                                        .then(calendar => {
+                                            if (!calendar) {
+                                                // If calendar is not found, create a new document
+                                                calendar = new Calendar({
+                                                    date: getLocalDate(),
+                                                    equity: equityToAdd,
+                                                    fAndO: fnoToAdd,
+                                                    commodity: commToAdd,
+                                                    currency: currToAdd,
+                                                    balance: 0
+                                                });
+                                            }
+
+                                            // Save the calendar document
+                                            return calendar.save()
+                                                .then(savedCalendar => {
+                                                    console.log('Calendar saved successfully:', savedCalendar);
+
+                                                    // Append the saved calendar to the user's calendar array
+                                                    user.Calendar.push(savedCalendar);
+
+                                                    // Save the updated user document
+                                                    return user.save()
+                                                        .then(savedUser => {
+                                                            console.log('User updated successfully:', savedUser);
+                                                        });
+                                                });
+                                        });
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                });
+
+                                
+                                
+
+                                const positionData = {
+                                    securityId: item.securityId,
+                                    tradingSymbol: item.tradingSymbol,
+                                    audioObject: null,
+                                    text: "",
+                                    posType: item.positionType,
+                                    segmentType: item.exchangeSegment,
+                                    costPrice: item.costPrice,
+                                    buyQty: item.buyQty,
+                                    profit: item.realizedProfit,
+                                    brokerage: item.unrealizedProfit,
+                                    drvExpiryDate: item.drvExpiryDate,
+                                    chart: hbody,
+                                    dateOfBuy: getLocalDate(),
+                                    dayOfBuy: getLocalDayName(),
+                                    strategyUsed: ""
+                                };
+                                addPositionIfNotExists(userId, positionData);
+
+                              });
+
+                        }
+
+                        var hasRecording = new Boolean(0);
+                        var themeThis= user.theme;
+                        res.render("Positions.ejs", 
+                        {
+                            theme: themeThis,
+                            imgSrc: req.session.passport.user.profile_pic,
+                            PageTitle: "Positions",
+                            Name: req.session.passport.user.name.split(" ")[0],
+                            list: items, 
+                            isavailable: hasRecording
+                        });
+                }
+                catch (error) {
+                    accessToken= 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzEzODc0NTY2LCJ0b2tlbkNvbnN1bWVyVHlwZSI6IlNFTEYiLCJ3ZWJob29rVXJsIjoiIiwiZGhhbkNsaWVudElkIjoiMTEwMDY4NzY5NyJ9.d2Bu7gDAE5u7WPT-VQ4LAq-stLgSNKHOB92aXSFZNCUQkRa9x5sB5c9XA6rHXzUTYstm-qENS5ijVUIMH1et1g';
+                    options = {
+                        method: 'GET',
+                        url: 'https://api.dhan.co/positions',
+                        headers: {'access-token': accessToken, Accept: 'application/json'}
+                    };
+                    request(options, function (error, response, body) {
+                        console.log(JSON.parse(body));
+                        console.log("Doosre ka error: "+error);
+                        if (error) {
+                            errorAayiThi= true;
+                            return;
+                        }
+                        items= JSON.parse(body);
+                        if(items.length == 0) {
+                            items= []
+                        }
+                        else
+                            items= items.concat(JSON.parse(body));
+                        items= JSON.parse(body);
+
+                        // Check whether the position already exists
+                        const userId = user.google_client_id;
+                        for(const item of items) {
+                            console.log(item);
+
+                            const hoptions = {
+                                method: 'POST',
+                                url: 'https://api.dhan.co/charts/intraday',
+                                headers: {
+                                  'access-token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzEzODc0NTY2LCJ0b2tlbkNvbnN1bWVyVHlwZSI6IlNFTEYiLCJ3ZWJob29rVXJsIjoiIiwiZGhhbkNsaWVudElkIjoiMTEwMDY4NzY5NyJ9.d2Bu7gDAE5u7WPT-VQ4LAq-stLgSNKHOB92aXSFZNCUQkRa9x5sB5c9XA6rHXzUTYstm-qENS5ijVUIMH1et1g',
+                                  'Content-Type': 'application/json',
+                                  Accept: 'application/json'
+                                },
+                                body: {securityId: item.securityId, exchangeSegment: 'NSE_FNO', instrument: 'OPTIDX'},
+                                json: true
+                              };
+                              
+                              request(hoptions, function (error, response, hbody) {
+                                if (error) throw new Error(error);
+                              
+                                console.log(hbody);
+                                
+                                const existingPos = user.Positions.find(position => position.securityId === item.securityId);
+                                if(!existingPos) {
+                                    if(item.realizedProfit > user.Biggest_Profit) {
+                                        user.Biggest_Profit = item.realizedProfit;
+                                        user.Best_Day_For_Trade = getLocalDayName();
+                                        user.Best_Lot_Size = item.buyQty;
+                                    }
+                                    if(item.realizedProfit < user.Biggest_Loss) {
+                                        user.Biggest_Loss = item.realizedProfit;
+                                    }
+                                    user.Total_Positions = user.Total_Positions + 1;
+                                    user.Total_Trades = user.Total_Trades + 1;
+                                    user.Total_Brokerage = user.Total_Brokerage + Math.abs(item.unrealizedProfit);
+    
+                                    if(String(item.exchangeSegment).toLowerCase().includes("fno")) {
+                                        user.Total_FAndO = user.Total_FAndO + 1;
+                                    }
+                                    if(String(item.exchangeSegment).toLowerCase().includes("eq")) {
+                                        user.Total_Equities = user.Total_Equities + 1;
+                                    }
+                                    if(String(item.exchangeSegment).toLowerCase().includes("currency")) {
+                                        user.Total_Currencies = user.Total_Currencies + 1;
+                                    }
+                                    if(String(item.exchangeSegment).toLowerCase().includes("comm")) {
+                                        user.Total_Commodities = user.Total_Commodities + 1;
+                                    }
+                                }
+                                
+                                const equityToAdd= user.Total_Equities;
+                                const commToAdd= user.Total_Commodities;
+                                const fnoToAdd= user.Total_FAndO;
+                                const currToAdd= user.Total_Currencies;
+                                user.save();
+                                
+                                User.findOne({ google_client_id: googleClientId })
+                                .exec()
+                                .then(user => {
+                                    if (!user) {
+                                        console.log('User not found');
+                                        return;
+                                    }
+
+                                    return Calendar.findOneAndUpdate(
+                                        { date: getLocalDate() }, // Filter to find the document
+                                        { $inc: { equity: equityToAdd } }, // Update to increment the equity field
+                                        { $inc: { fAndO: fnoToAdd } },
+                                        { $inc: { commodity: commToAdd } },
+                                        { $inc: { currency: currToAdd } },
+                                        { $inc: { balance: 0 } },
+                                        { upsert: true, new: true } // Options to create if not found and return the updated document
+                                    )
+                                    .exec()
+                                    .then(updatedCalendar => {
+                                        console.log('Calendar updated or created successfully:', updatedCalendar);
+                            
+                                        // Append the updated or created calendar to the user's calendar array
+                                        const existingCalendar = user.Calendar.find(calendar => calendar.date === getLocalDate());
+                                        if(!existingCalendar)
+                                            user.Calendar.push(updatedCalendar);
+                            
+                                        // Save the updated user document
+                                        return user.save()
+                                            .then(savedUser => {
+                                                console.log('User updated successfully:', savedUser);
+                                            });
+                                    });
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                });
+
+                                
+
+                                const positionData = {
+                                    securityId: item.securityId,
+                                    tradingSymbol: item.tradingSymbol,
+                                    audioObject: null,
+                                    text: "",
+                                    posType: item.positionType,
+                                    segmentType: item.exchangeSegment,
+                                    costPrice: item.costPrice,
+                                    buyQty: item.buyQty,
+                                    profit: item.realizedProfit,
+                                    brokerage: item.unrealizedProfit,
+                                    drvExpiryDate: item.drvExpiryDate,
+                                    chart: hbody,
+                                    dateOfBuy: getLocalDate(),
+                                    dayOfBuy: getLocalDayName(),
+                                    strategyUsed: ""
+                                };
+                                addPositionIfNotExists(userId, positionData);
+
+                              });
+
+                        }
+
+                        var hasRecording = new Boolean(0);
+                        var themeThis= user.theme
+                        res.render("Positions.ejs", 
+                        {
+                            theme: themeThis,
+                            imgSrc: req.session.passport.user.profile_pic,
+                            PageTitle: "Positions",
+                            Name: req.session.passport.user.name.split(" ")[0],
+                            list: items, 
+                            isavailable: hasRecording
+                        });
+                    });
+                }
+                
             });
+
+        } catch (error) {
             
-        
-        });
+            console.log("Purani lagaani padhegi");
+
+        }
 
     } else {
         res.redirect("/Home")
@@ -546,30 +877,38 @@ app.get("/Overview-Report", (req, res)=>{
 
     if(req.isAuthenticated()) {
         var themeThis= "none";
-        const googleClientId= req.session.passport.user.google_client_id;
-            getThemeById(googleClientId)
-            .then(theme => {
-                // console.log("Strategies:", strategies);
-                themeThis= theme;
-                res.render("Overview-Report.ejs", 
-                {
-                    theme: themeThis,
-                    imgSrc: req.session.passport.user.profile_pic,
-                    PageTitle: "Overview Report",
-                    Name: req.session.passport.user.name.split(" ")[0],
-                    AccBalance: "12,340.5",
-                    CumRet: "120.5",
-                    NonCumRet: "230.5",
-                    DaiRet: "1,340.5",
-                    RetWin: "1,234.5",
-                    RetLoss: "2,300",
-                    BigPro: "2,300",
-                    BigLoss: "120"
-                });
-            })
-            .catch(err => {
-                console.error("Error:", err);
+        const options = {
+            method: 'GET',
+            url: 'https://api.dhan.co/fundlimit',
+            headers: {
+              'access-token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzEzODc0NTY2LCJ0b2tlbkNvbnN1bWVyVHlwZSI6IlNFTEYiLCJ3ZWJob29rVXJsIjoiIiwiZGhhbkNsaWVudElkIjoiMTEwMDY4NzY5NyJ9.d2Bu7gDAE5u7WPT-VQ4LAq-stLgSNKHOB92aXSFZNCUQkRa9x5sB5c9XA6rHXzUTYstm-qENS5ijVUIMH1et1g',
+              Accept: 'application/json'
+            }
+          };
+          
+          request(options, async function (error, response, body) {
+            if (error) throw new Error(error);
+          
+            var k= JSON.parse(body).availabelBalance;
+            const googleClientId= req.session.passport.user.google_client_id;
+            const user = await User.findOne({ google_client_id: googleClientId });
+            var themeThis= user.theme;
+            res.render("Overview-Report.ejs", 
+            {
+                theme: themeThis,
+                imgSrc: req.session.passport.user.profile_pic,
+                PageTitle: "Overview Report",
+                Name: req.session.passport.user.name.split(" ")[0],
+                AccBalance: k,
+                CumRet: 0,
+                NonCumRet: 0,
+                DaiRet: 0,
+                RetWin: 0,
+                RetLoss: 0,
+                BigPro: user.Biggest_Profit,
+                BigLoss: Math.abs(Number(user.Biggest_Loss))
             });
+          });
     } else {
         res.redirect("/Home")
     }    
@@ -615,31 +954,34 @@ app.get("/Setup-Report", (req, res)=>{
     }
 })
 
-app.get("/ShareLog-Analysis", (req, res)=>{
+app.get("/ShareLog-Analysis", async (req, res)=>{
 
     if(req.isAuthenticated()) {
-        var themeThis= "none";
         const googleClientId= req.session.passport.user.google_client_id;
-            getThemeById(googleClientId)
-            .then(theme => {
-                themeThis= theme;
-                res.render("Sharelog-Analysis.ejs", 
-                {
-                    theme: themeThis,
-                    imgSrc: req.session.passport.user.profile_pic,
-                    PageTitle: "Analysis",
-                    Name: req.session.passport.user.name.split(" ")[0],
-                    BestStrats: "Trendline",
-                    BestTimeSlot: "Morning",
-                    BestDay: "Monday",
-                    BestLot: 20000,
-                    BigPro: 2300,
-                    BigLoss: 120
-                });
-            })
-            .catch(err => {
-                console.error("Error:", err);
-            });
+        const user = await User.findOne({ google_client_id: googleClientId });
+        var themeThis= user.theme;
+        var randStrat= "None";
+        if(user.Strategies.length > 0) {
+            const randomIndex = Math.floor(Math.random() * user.Strategies.length);
+            randStrat= user.Strategies[randomIndex][0];
+        }
+        var busty= "None"
+        if(user.Best_Day_For_Trade.length > 0)
+            busty= user.Best_Day_For_Trade;
+
+        res.render("Sharelog-Analysis.ejs", 
+        {
+            theme: themeThis,
+            imgSrc: req.session.passport.user.profile_pic,
+            PageTitle: "Analysis",
+            Name: req.session.passport.user.name.split(" ")[0],
+            BestStrats: randStrat,
+            BestTimeSlot: "Morning",
+            BestDay: busty,
+            BestLot: user.Best_Lot_Size,
+            BigPro: user.Biggest_Profit,
+            BigLoss: user.Biggest_Loss
+        });
 
     } else {
         res.redirect("/Home")

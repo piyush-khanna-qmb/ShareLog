@@ -10,7 +10,7 @@ const findOrCreate = require("mongoose-findorcreate");
 const { use } = require('passport');
 const mongoose = require('mongoose');
 const request = require('request');
-const { list } = require('parser');
+// const { list } = require('parser');
 const { Strategy } = require('passport-google-oauth20');
 const app = express();
 const port = 3000;
@@ -623,7 +623,7 @@ app.get("/ShareLog-Analysis", (req, res)=>{
             getThemeById(googleClientId)
             .then(theme => {
                 themeThis= theme;
-                res.render("ShareLog-Analysis.ejs", 
+                res.render("Sharelog-Analysis.ejs", 
                 {
                     theme: themeThis,
                     imgSrc: req.session.passport.user.profile_pic,

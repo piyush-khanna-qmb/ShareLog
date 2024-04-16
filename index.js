@@ -548,6 +548,12 @@ app.get("/Dashboard", async (req, res)=>{
     }
 })
 
+function convertDateFormat(date) {
+    const parts = date.split('-');
+    // Rearrange the parts to the desired format (MM-DD-YYYY)
+    return `${parts[1]}-${parts[2]}-${parts[0]}`;
+}
+
 app.get("/Portfolio", async (req, res)=>{
 
     if(req.isAuthenticated()) {
@@ -559,6 +565,15 @@ app.get("/Portfolio", async (req, res)=>{
             const randomIndex = Math.floor(Math.random() * user.Strategies.length);
             randStrat= user.Strategies[randomIndex][0];
         }
+
+        const filteredCal = filterDateAndBalance(user.Calendar);
+        filteredCal.forEach(obj => {
+            obj.date = convertDateFormat(obj.date);
+        });
+        const jabdaDabda= filteredCal;
+        console.log(typeof(filteredCal));
+        console.log(filteredCal);
+
         res.render("Portfolio.ejs", 
         {
             theme: themeThis,
@@ -566,6 +581,7 @@ app.get("/Portfolio", async (req, res)=>{
             PageTitle: "Portfolio",
             Name: req.session.passport.user.name.split(" ")[0],
             PAndL: Number(user.NetPnL).toFixed(2),
+            splineData: jabdaDabda,
             BestStrat: randStrat,
             NumTrads: user.Total_Trades,
             equity: user.Total_Equities,
@@ -580,33 +596,6 @@ app.get("/Portfolio", async (req, res)=>{
 })
 
 
-  async function addPositionIfNotExists(userId, positionData) {
-    try {
-        // Find the user by their ID
-        const user = await User.findOne({ google_client_id: userId });
-
-        // If user doesn't exist, handle accordingly
-        if (!user) {
-            throw new Error('User not found');
-        }
-
-        // Check if a position with the given securityID already exists for the user
-        const existingPosition = user.Positions.find(position => position.securityId === positionData.securityId);
-
-        // If position doesn't exist, create a new one and add it to the Positions array
-        if (!existingPosition) {
-            const newPosition = new Position(positionData);
-            user.Positions.push(newPosition);
-            await user.save();
-            console.log('New position added for user:', userId);
-        } else {
-            console.log('Position already exists for user:', userId);
-        }
-    } catch (error) {
-        console.error(error);
-        // Handle error
-    }
-}
 function getLocalDayName() {
     const currentDate = new Date();
     
@@ -826,10 +815,18 @@ function filterCalendarArray(calendarArray) {
     return filteredArray;
 }
 
+function filterDateAndBalance(calendarArray) {
+    const filteredArray = calendarArray.map(obj => ({
+        date: obj.date,
+        balance: obj.balance
+    }));
+
+    return filteredArray;
+}
+
 app.get("/Overview-Report", (req, res)=>{
 
     if(req.isAuthenticated()) {
-        var themeThis= "none";
         const options = {
             method: 'GET',
             url: 'https://api.dhan.co/fundlimit',

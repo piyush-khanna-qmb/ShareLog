@@ -129,7 +129,23 @@
     justify-content: center;
     align-items: center;
 }
-
+.container-color-notations{
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+    margin-top: 30px;
+}
+.container-color-notations h6 {
+    font-size: 0.8rem;
+    color: rgb(215, 210, 210);
+    display: inline-block;
+}
+.color-notation{
+    height: 17px;
+    width: 17px;
+    margin-left: 2px;
+    margin-right: 2px;
+}
 .container-cards {
     padding: 1.5rem;
     margin: 1.5rem;

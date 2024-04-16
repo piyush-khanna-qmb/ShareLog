@@ -73,7 +73,7 @@
 TECHNICAL
 >. Work on light theme
 >. Logo assembly
->. Setup charts page creation
+x. Setup charts page creation
 X. Data APIs test and Integration
 X. Charts storing
 >. Speech and text addition
@@ -84,13 +84,13 @@ MANAGERIAL
 
 5 April, 24:
 X. Fill info with specific gmail account settings
->. 'Buy Premium' page and razorpay gateway integration
+x. 'Buy Premium' page and razorpay gateway integration
 X. Google Session maintainence work
->. Sign up pages integration
+x. Sign up pages integration
 >. End date of trial period integration
 
 6 April, 24:
 >. Speech and text save and retrieve
 >. Charts save and render
->. Calendar Heatmap render
+x. Calendar Heatmap render
 >. Rest of the payment: 5k

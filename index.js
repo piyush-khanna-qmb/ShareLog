@@ -10,11 +10,13 @@ const findOrCreate = require("mongoose-findorcreate");
 const { use } = require('passport');
 const mongoose = require('mongoose');
 const request = require('request');
+const { MongoClient, Binary, ObjectId } = require('mongodb');
 // const { list } = require('parser');
 const { Strategy } = require('passport-google-oauth20');
 const app = express();
 const port = 3000;
 
+app.use(body_parser.json({ limit: '50mb' }));
 app.use(express.json());
 app.set('view engine', 'ejs');
 app.use(body_parser.urlencoded({ extended: true}));
@@ -43,10 +45,18 @@ const chartSchema= new mongoose.Schema({
     time: [Number]
 });
 
+const audioSchema= new mongoose.Schema({
+    audId: String,
+    audio: {
+        data: Buffer, 
+        contentType: String 
+    }
+})
+
 const posSchema = new mongoose.Schema({
     securityId: String,
     tradingSymbol: String,
-    audioObject: String,
+    audioObject: audioSchema,
     text: String,
     posType: String,
     segmentType: String,
@@ -122,6 +132,7 @@ userSchema.plugin(findOrCreate)
 const User = new mongoose.model("User", userSchema);
 const Position = new mongoose.model('Position', posSchema);
 const Calendar = new mongoose.model('Calender', calSchema);
+const Audio = mongoose.model('Audio', audioSchema);
 
 async function findUserByGoogleClientId(googleClientId) {
     try {
@@ -309,50 +320,133 @@ function getDateObjectFromString(dateString) {
     return new Date(year, month - 1, day);
 }
 
+const dbName = 'Recordings';
+
+app.post('/saveAudio', async (req, res) => {
+    
+    try {
+        const { buttonId, audio } = req.body;
+
+        // Convert base64 audio data to Buffer
+        const audioBuffer = Buffer.from(audio, 'base64');
+
+        // Create a new audio document
+        const newAudio = new Audio({
+            audId: buttonId,
+            audio: {
+                data: audioBuffer,
+                contentType: 'audio/wav' // Example content type (adjust as needed)
+            }
+        });
+        
+        const googleClientId= req.session.passport.user.google_client_id;
+        const user = await User.findOne({ google_client_id: googleClientId });
+        
+        const index = user.Positions.findIndex(position => position._id == buttonId);
+
+        if (index !== -1) {
+            console.log('Index of position with key position ID:', index);
+
+            await newAudio.save()
+            .then(savedAudio => {
+                console.log('Recording saved to MongoDB:', savedAudio);
+            })
+            .catch(error => {
+                console.error('Error saving recording to MongoDB:', error);
+            });
+
+            user.Positions[index].audioObject = newAudio;
+            await user.save();
+
+        } else {
+            console.log('No position found with key position ID:', buttonId);
+        }
+        
+        res.status(201).send('Audio data has been successfully stored.').end();
+
+    }
+    catch (error) {
+        console.error('Error saving recording to MongoDB:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }    
+
+  });
+
+  app.post('/playAudio', async (req, res) => {
+
+    try {
+        const buttId= req.body.buttonId;
+        console.log("Request to look for button ID", buttId);
+        const googleClientId= req.session.passport.user.google_client_id;
+        const user = await User.findOne({ google_client_id: googleClientId });
+        const index = user.Positions.findIndex(position => position._id == buttId);
+        if (index !== -1) {
+            console.log('Name of position with key position ID:', user.Positions[index].tradingSymbol);
+            console.log("Found an audio object corresponding: ", user.Positions[index].audioObject);
+            const audioData= user.Positions[index].audioObject;
+            res.status(200).send(audioData.audio.data);
+        } else {
+            console.log('No position found with key position ID:', buttonId);
+            res.status(404).send('No audio data found');
+        }
+    }
+    catch (error){
+        console.error('Error playing audio:', error);
+        res.status(500).send('Error playing audio');
+    }
+    
+  });
+
+function getDateForDashboard(data) {
+    const date = new Date(data);
+
+    // Get day, month, and year
+    const day = date.getDate();
+    const monthIndex = date.getMonth();
+    const year = date.getFullYear();
+
+    // Array of month names
+    const months = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+
+    // Format the day with suffix (e.g., 1st, 2nd, 3rd)
+    let dayFormatted;
+    switch (day) {
+        case 1:
+        case 21:
+        case 31:
+            dayFormatted = day + "st";
+            break;
+        case 2:
+        case 22:
+            dayFormatted = day + "nd";
+            break;
+        case 3:
+        case 23:
+            dayFormatted = day + "rd";
+            break;
+        default:
+            dayFormatted = day + "th";
+    }
+
+    // Format the date as "ddth mmm, yyyy"
+    const formattedDate = `${dayFormatted} ${months[monthIndex]}, ${year}`;
+
+    return formattedDate;
+}
+
 app.get("/Dashboard", async (req, res)=>{
 
     if(req.isAuthenticated()) {
-        const ttoday = new Date();
-        const tday = ttoday.getDate();
-        const tmonth = ttoday.getMonth() + 1; // January is 0!
-        const tyear = ttoday.getFullYear();
-
-        // Format today's date as DD-MM-YYYY
-        const tformattedToday = `${tday < 10 ? '0' : ''}${tday}-${tmonth < 10 ? '0' : ''}${tmonth}-${tyear}`;
-
-        const date1 = getDateObjectFromString(req.session.passport.user.start_day);
-        const date2 = getDateObjectFromString(tformattedToday);
-
-        const differenceInMilliseconds = Math.abs(date1 - date2);
-        const differenceInDays = 14- Math.ceil(differenceInMilliseconds / (1000 * 60 * 60 * 24));
-
-        console.log(`Days left= ${differenceInDays}`);
-
-
-        const currentDate = new Date();
-        const monthNames = [
-        "Jan", "Feb", "Mar",
-        "Apr", "May", "Jun", "Jul",
-        "Aug", "Sept", "Oct",
-        "Nov", "Dec"
-        ];
-        const day = currentDate.getDate();
-        const monthIndex = currentDate.getMonth();
-        const year = currentDate.getFullYear();
-        const dayy= currentDate.getDay();
-        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        const formattedDate = `${day} ${monthNames[monthIndex]}, ${year}`;
-
-        //! Get these data in real time from the API
-        /* 
-            formattedDate ki jagah date of buying stuff from database
-            Type: Holdings hain ya Position
-        */
 
         const googleClientId= req.session.passport.user.google_client_id;
         const user = await User.findOne({ google_client_id: googleClientId });
 
-        let allPositions = await getAllPositions();
+        let allPositions = await generateFakePosition();
+        // let allPositions = await getAllPositions();
+        console.log(allPositions);
 
         //! Extract and add all positions
         for (const thisPosition of allPositions) 
@@ -532,14 +626,15 @@ app.get("/Dashboard", async (req, res)=>{
             imgSrc: req.session.passport.user.profile_pic,
             PageTitle: "Dashboard",
             Name: req.session.passport.user.name.split(" ")[0],
-            DateBought: formattedDate,
-            DayBought: dayNames[dayy],
+            // DateBought: formattedDate,
+            // DayBought: dayNames[dayy],
             TypePosOrHold: "P&L",
             PAndL: Number(user.NetPnL).toFixed(2),
             TotStrats: user.Strategies.length,
             TotPos: user.Total_Positions,
             TotHolds: user.Total_Holdings,
-            Amount: Number(user.NetPnL).toFixed(2)
+            Amount: Number(user.NetPnL).toFixed(2),
+            carouselData: user.Positions
         });
 
     } else {
@@ -637,6 +732,103 @@ function getAllPositions() {
     });
 }
 
+async function generateFakePosition() {
+    const positionData = [
+        {
+          "dhanClientId": "string",
+          "tradingSymbol": "NayaBsdka",
+          "securityId": "1",
+          "positionType": "LONG",
+          "exchangeSegment": "NSE_EQ",
+          "productType": "CNC",
+          "buyAvg": 0,
+          "costPrice": 0,
+          "buyQty": 0,
+          "sellAvg": 0,
+          "sellQty": 0,
+          "netQty": 0,
+          "realizedProfit": 123,
+          "unrealizedProfit": 2,
+          "rbiReferenceRate": 0,
+          "multiplier": 0,
+          "carryForwardBuyQty": 0,
+          "carryForwardSellQty": 0,
+          "carryForwardBuyValue": 0,
+          "carryForwardSellValue": 0,
+          "dayBuyQty": 0,
+          "daySellQty": 0,
+          "dayBuyValue": 0,
+          "daySellValue": 0,
+          "drvExpiryDate": "string",
+          "drvOptionType": "CALL",
+          "drvStrikePrice": 0,
+          "crossCurrency": true
+        },
+        {
+            "dhanClientId": "string",
+            "tradingSymbol": "DoosraBsdka",
+            "securityId": "12",
+            "positionType": "LONG",
+            "exchangeSegment": "NSE_EQ",
+            "productType": "CNC",
+            "buyAvg": 0,
+            "costPrice": 0,
+            "buyQty": 0,
+            "sellAvg": 0,
+            "sellQty": 0,
+            "netQty": 0,
+            "realizedProfit": -12,
+            "unrealizedProfit": 0,
+            "rbiReferenceRate": 0,
+            "multiplier": 0,
+            "carryForwardBuyQty": 0,
+            "carryForwardSellQty": 0,
+            "carryForwardBuyValue": 0,
+            "carryForwardSellValue": 0,
+            "dayBuyQty": 0,
+            "daySellQty": 0,
+            "dayBuyValue": 0,
+            "daySellValue": 0,
+            "drvExpiryDate": "string",
+            "drvOptionType": "CALL",
+            "drvStrikePrice": 0,
+            "crossCurrency": true
+          },
+          {
+            "dhanClientId": "string",
+            "tradingSymbol": "TeesraBsdka",
+            "securityId": "123",
+            "positionType": "LONG",
+            "exchangeSegment": "NSE_FNO",
+            "productType": "CNC",
+            "buyAvg": 0,
+            "costPrice": 0,
+            "buyQty": 0,
+            "sellAvg": 0,
+            "sellQty": 0,
+            "netQty": 0,
+            "realizedProfit": 69,
+            "unrealizedProfit": 0,
+            "rbiReferenceRate": 0,
+            "multiplier": 0,
+            "carryForwardBuyQty": 0,
+            "carryForwardSellQty": 0,
+            "carryForwardBuyValue": 0,
+            "carryForwardSellValue": 0,
+            "dayBuyQty": 0,
+            "daySellQty": 0,
+            "dayBuyValue": 0,
+            "daySellValue": 0,
+            "drvExpiryDate": "string",
+            "drvOptionType": "CALL",
+            "drvStrikePrice": 0,
+            "crossCurrency": true
+          }
+      ]
+
+    return JSON.parse(JSON.stringify(positionData));
+}
+
 async function getChartData(securityID, exchangeSeg, instru) {
     return new Promise((resolve, reject) => {
         const options = {
@@ -690,6 +882,19 @@ async function getCurBalance() {
     });
   }
 
+function getTodaysPositions(user) {
+    try {
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0];
+        // Filter positions based on dateOfBuy
+        const todaysPositions = user.Positions.filter(position => position.dateOfBuy === formattedDate);
+        return todaysPositions;
+    } catch (error) {
+        console.error('Error retrieving today\'s positions:', error);
+        throw error;
+    }
+}
+
 app.get("/Positions", async(req, res)=>
 { 
     if(req.isAuthenticated()) {
@@ -702,7 +907,8 @@ app.get("/Positions", async(req, res)=>
 
         const googleClientId= req.session.passport.user.google_client_id;
         const user = await User.findOne({ google_client_id: googleClientId });
-        let allPositions = await getAllPositions();
+        // let allPositions = await getAllPositions();
+        let todaysPositions = getTodaysPositions(user)
         
         var hasRecording = new Boolean(0);
         res.render("Positions.ejs", 
@@ -711,8 +917,9 @@ app.get("/Positions", async(req, res)=>
             imgSrc: user.profile_pic,
             PageTitle: "Positions",
             Name: user.name.split(" ")[0],
-            list: allPositions, 
-            isavailable: hasRecording
+            isavailable: hasRecording,
+            carouselData: todaysPositions,
+            Strategies: user.Strategies
         });
 
     } else {
@@ -965,6 +1172,24 @@ async function getStrategiesByClientId(googleClientId) {
     }
 }
 
+app.post("/SaveDataForPos", async function (req, res) {
+    const strat= req.body.strat;
+    const descr= req.body.Descr;
+    const posId= req.body.posId;
+
+    const googleClientId= req.session.passport.user.google_client_id;
+    const user = await User.findOne({ google_client_id: googleClientId });
+
+    const index = user.Positions.findIndex(position => position._id == posId);
+    const thisPossy= user.Positions[index];
+
+    thisPossy.text= descr;
+    thisPossy.strategyUsed= strat;
+
+    await user.save();
+    console.log("Strategy and Notes saved");
+    res.redirect("/Positions")
+})
 
 app.get("/Strategies", (req, res)=>{
     

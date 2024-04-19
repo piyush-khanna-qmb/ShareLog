@@ -37,9 +37,13 @@
           <%- include("partials/oopari-navbar.ejs", {Title: PageTitle, Name: Name, imgSrc: imgSrc}) %>
 
           <div class="Bhandaari">
+            
             <div class="graphs">
     
               <div class="container-Account-graph">
+                <div class="container-heading">
+                  <h1 class="main-heading forPort"> &nbsp; &nbsp; &nbsp; &nbsp; Account Graph</h1>
+                </div>
                 <div id="container-spline-chart" style="height: 30rem;"></div>
               </div>
               <div class="container-Portfolio">
@@ -91,15 +95,15 @@
         console.log(dataPoints0);
         var chart = new CanvasJS.Chart("container-spline-chart", {
           animationEnabled: true,  
-          title:{
-            text: "Account Graph",
-                fontColor: "#ffffff",
-              horizontalAlign: "center",
-            margin:30,
-            fontSize: 50,
-            fontFamily: "Calibri, sans-serif"
+          // title:{
+          //   text: "Account Graph",
+          //       fontColor: "#ffffff",
+          //     horizontalAlign: "center",
+          //   margin:30,
+          //   fontSize: 50,
+          //   fontFamily: "Calibri, sans-serif"
             
-          },
+          // },
           axisX: {
             labelFontColor: "#bbbbbb", // Set label text color to white
             valueFormatString: "DD"

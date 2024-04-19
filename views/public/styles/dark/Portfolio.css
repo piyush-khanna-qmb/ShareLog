@@ -26,6 +26,11 @@
     flex-direction: row;
 }
 
+.forPort {
+    margin: 30px;
+    margin-top: 0;
+}
+
 .Bhandaari {
     padding: 4%;
     padding-bottom: 2%;

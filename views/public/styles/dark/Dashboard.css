@@ -3,6 +3,19 @@
     height: 70vh;
 }
 
+.container-list{
+    /* overflow-y: auto; 
+    max-height: 61vh;  */
+    font-size: x-large;
+}
+
+.nothingness h1 {
+    text-align: center;
+    padding-top: 15%;
+    color: grey;
+    height: 60vh;
+}
+
 .container-carousel {
     margin-top: 10px;
 }
@@ -12,6 +25,7 @@
     padding-bottom: 2%;
     margin-bottom: 0px;
 }
+
 .Lulla {
     text-align: left;
 }
@@ -34,6 +48,103 @@
     flex: 1;
     justify-content: flex-end;
 }
+.container-audio-control{
+    display: flex;
+    margin-top: 10px;
+    
+    justify-content: center;
+    align-items: center;
+    background-color: #15161a;
+    border-radius: 4px;
+    height: 4rem;
+}
+.container-mic-control{
+    display: flex;
+    margin-top: 10px;
+   
+    justify-content: center;
+    align-items: center;
+    background-color: #15161a;
+    border-radius: 4px;
+    height: 4rem;
+}
+
+.rewind-button {
+    width: 50px;
+    height: 50px;
+    background-color: red;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .rewind-button i {
+    color: white;
+    font-size: 24px;
+  }
+
+  .play-button {
+    width: 50px;
+    height: 50px;
+    background-color: red;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 5px;
+    margin-right: 5px;
+  }
+
+  .play-button i {
+    color: white;
+    font-size: 24px;
+  }
+
+  .forward-button {
+    width: 50px;
+    height: 50px;
+    background-color: red;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .forward-button i {
+    color: white;
+    font-size: 24px;
+  }
+ 
+  .mic-button{
+    width: 50px;
+    height: 50px;
+    background-color: red;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 4px;
+  }
+  .three-lines{
+    width: 50px;
+    height: 50px;
+    background-color: red;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 .container-of-containers{
     margin-top: 2rem;
     display: flex;

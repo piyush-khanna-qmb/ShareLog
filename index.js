@@ -68,7 +68,9 @@ const posSchema = new mongoose.Schema({
     chart: chartSchema,
     dateOfBuy: String,
     dayOfBuy: String,
-    strategyUsed: String
+    strategyUsed: String,
+    multiplier: Number,
+    curBalance: Number
 })
 
 const holdSchema= new mongoose.Schema({
@@ -117,12 +119,14 @@ const userSchema = new mongoose.Schema({
     Biggest_Loss: Number,
     Best_Day_For_Trade: String,
     Best_Strategy: String,
+    Best_Strategy_Rating: Number,
     Best_Lot_Size: Number,
     Strategies: [[String]],
     curBalance: Number,
     Positions: [posSchema], 
     Holdings: [holdSchema],
     Calendar: [calSchema],
+    Setup: [],
     NetPnL: Number
 });
 
@@ -176,12 +180,14 @@ async function createUser(data) {
             Biggest_Loss: 0,
             Best_Day_For_Trade: "",
             Best_Strategy: "",
+            Best_Strategy_Rating: 0,
             Best_Lot_Size: 0,
             Strategies: [],
             curBalance: 0,
             Positions: [], 
             Holdings: [],
             Calendar: [],
+            Setup: [],
             NetPnL: 0
         });
 
@@ -437,6 +443,10 @@ function getDateForDashboard(data) {
     return formattedDate;
 }
 
+function feedTime(arr) {
+    
+}
+
 app.get("/Dashboard", async (req, res)=>{
 
     if(req.isAuthenticated()) {
@@ -486,6 +496,13 @@ app.get("/Dashboard", async (req, res)=>{
                     console.log(String(chartData.errorCode));
                     if(String(chartData.open) !== "undefined" && chartData.open.length > 0) {
                         console.log("Chart data avaialable!");
+                        var huiChart= {};
+                        huiChart.open= chartData.open;
+                        huiChart.high= chartData.high;
+                        huiChart.low= chartData.low;
+                        huiChart.close= chartData.close;
+                        huiChart.time= feedTime(chartData.start_Time)
+
                     } else {
                         chartData = null;
                     }
@@ -505,6 +522,7 @@ app.get("/Dashboard", async (req, res)=>{
 
                 user.NetPnL += (thisPosition.realizedProfit - thisPosition.unrealizedProfit);
 
+               //! Setup charts yahaan nahi benenge kyuki is vaqt ye tey nhi hota ki konsi strategy dalegi isme
 
                 //! Save pos object
                 const positionData = {
@@ -522,7 +540,9 @@ app.get("/Dashboard", async (req, res)=>{
                     chart: chartData,
                     dateOfBuy: getLocalDate(),
                     dayOfBuy: getLocalDayName(),
-                    strategyUsed: ""
+                    strategyUsed: "",
+                    multiplier: thisPosition.multiplier,
+                    curBalance: await getCurBalance()
                 };
 
                 var newPosition = new Position(positionData);
@@ -615,7 +635,7 @@ app.get("/Dashboard", async (req, res)=>{
                     
                     aajKiDateWalaObject.securityIds.push(secId);
                     aajKiDateWalaObject.save({ suppressWarning: true });
-                    user.save();
+                    await user.save();
                 }
             }
         }
@@ -657,8 +677,14 @@ app.get("/Portfolio", async (req, res)=>{
         var themeThis= user.theme;
         var randStrat= "None";
         if(user.Strategies.length > 0) {
-            const randomIndex = Math.floor(Math.random() * user.Strategies.length);
-            randStrat= user.Strategies[randomIndex][0];
+            if(user.Best_Strategy == null || user.Best_Strategy == undefined || user.Best_Strategy.length == 0)
+            {
+                const randomIndex = Math.floor(Math.random() * user.Strategies.length);
+                randStrat= user.Strategies[randomIndex][0];
+            }
+            else{
+                randStrat= user.Best_Strategy;
+            }
         }
 
         const filteredCal = filterDateAndBalance(user.Calendar);
@@ -741,16 +767,16 @@ async function generateFakePosition() {
           "positionType": "LONG",
           "exchangeSegment": "NSE_EQ",
           "productType": "CNC",
-          "buyAvg": 0,
-          "costPrice": 0,
-          "buyQty": 0,
+          "buyAvg": 12,
+          "costPrice": 123,
+          "buyQty": 2,
           "sellAvg": 0,
           "sellQty": 0,
-          "netQty": 0,
+          "netQty": 23,
           "realizedProfit": 123,
           "unrealizedProfit": 2,
           "rbiReferenceRate": 0,
-          "multiplier": 0,
+          "multiplier": 2,
           "carryForwardBuyQty": 0,
           "carryForwardSellQty": 0,
           "carryForwardBuyValue": 0,
@@ -769,14 +795,14 @@ async function generateFakePosition() {
             "tradingSymbol": "DoosraBsdka",
             "securityId": "12",
             "positionType": "LONG",
-            "exchangeSegment": "NSE_EQ",
+            "exchangeSegment": "NSE_FNO",
             "productType": "CNC",
-            "buyAvg": 0,
-            "costPrice": 0,
-            "buyQty": 0,
+            "buyAvg": 10,
+            "costPrice": 20,
+            "buyQty": 30,
             "sellAvg": 0,
             "sellQty": 0,
-            "netQty": 0,
+            "netQty": 20,
             "realizedProfit": -12,
             "unrealizedProfit": 0,
             "rbiReferenceRate": 0,
@@ -801,16 +827,16 @@ async function generateFakePosition() {
             "positionType": "LONG",
             "exchangeSegment": "NSE_FNO",
             "productType": "CNC",
-            "buyAvg": 0,
-            "costPrice": 0,
-            "buyQty": 0,
+            "buyAvg": 10,
+            "costPrice": 20,
+            "buyQty": 10,
             "sellAvg": 0,
             "sellQty": 0,
-            "netQty": 0,
+            "netQty": 20,
             "realizedProfit": 69,
-            "unrealizedProfit": 0,
+            "unrealizedProfit": 10,
             "rbiReferenceRate": 0,
-            "multiplier": 0,
+            "multiplier": 20,
             "carryForwardBuyQty": 0,
             "carryForwardSellQty": 0,
             "carryForwardBuyValue": 0,
@@ -1063,14 +1089,15 @@ app.get("/Overview-Report", (req, res)=>{
                 PageTitle: "Overview Report",
                 Name: req.session.passport.user.name.split(" ")[0],
                 AccBalance: k,
-                CumRet: 0,
-                NonCumRet: 0,
-                DaiRet: 0,
-                RetWin: 0,
-                RetLoss: 0,
+                CumRet: 12,
+                NonCumRet: 1.7,
+                DaiRet: 12,
+                RetWin: 5.6,
+                RetLoss: 2.3,
                 calData: filteredArray,
                 BigPro: user.Biggest_Profit,
-                BigLoss: Math.abs(Number(user.Biggest_Loss))
+                BigLoss: Math.abs(Number(user.Biggest_Loss)),
+                carouselData: user.Positions
             });
           });
     } else {
@@ -1078,41 +1105,216 @@ app.get("/Overview-Report", (req, res)=>{
     }    
 })
 
-app.get("/Setup-Report", (req, res)=>{
+app.post("/Setup-Report", async function (req, res) {
+    
+    const body= req.body;
+    let fromDate= body.fromDate;    //maybe empty
+    let toDate= body.toDate;    //maybe empty
+    let defo= body.strat;
+
+    if(fromDate.length == 0) // for calculation
+        fromDate= "2024-01-01";
+    if(toDate.length == 0)
+        toDate= "2024-12-31";
+    if(body.strat == 'Select Strategy' || body.strat.length == 0)
+        defo= ""
+
+    console.log("Got from setup report post: ", body);
+
+    req.session.SetupObject= {
+        defaultSelection: defo,
+        defaultForDate: body.fromDate,  // Pass empty if already got maybe empty
+        defaultToDate: body.toDate,
+    };
+    res.redirect("/Setup-Report");
+})
+
+app.get("/Setup-Report", async (req, res)=>{
     if(req.isAuthenticated()) {
-        console.log("Profile me: "+ req.session.passport.user.google_client_id);
+        
         const googleClientId= req.session.passport.user.google_client_id;
+        const user = await User.findOne({ google_client_id: googleClientId });
         var themeThis= "none";
 
-        let data= [
-            ["Monday", "12-04-2024", 12, 12, 12, 12, 12, 12, 12, 12],
-            ["Tuesday", "13-04-2024", 12, 13, 15, 2, 12, 12, 12, 12],
-            ["Wednesday", "14-04-2024",  12, 12, 52, 12, 12, 12, 12, 12],
-            ["Thursday", "15-04-2024", 12, 62, 12, 12, 12, 12, 12, 12],
-            ["Friday", "16-04-2024", 12, 32, 12, 12, 16, 12, 12, 12]
-        ]
-
-        getThemeById(googleClientId)
-        .then(theme => {
-            // console.log("Strategies:", strategies);
-            themeThis= theme;
-            console.log("Theme this:"+ themeThis);
-            res.render("Setup-Report.ejs", 
-            {
-                theme: themeThis,
-                imgSrc: req.session.passport.user.profile_pic,
-                PageTitle: "Setup-Report",
-                data: data,
-                Name: req.session.passport.user.name.split(" ")[0],
-                PAndL: "50,000",
-                BestStrat: "Trendline",
-                NumTrads: 23,
-                TotBrokerage: "20,000",
-            });
-        })
-        .catch(err => {
-            console.error("Error:", err);
+        const filteredCal = filterDateAndBalance(user.Calendar);
+        filteredCal.forEach(obj => {
+            obj.date = convertDateFormat(obj.date);
         });
+        const jabdaDabda= filteredCal;  //For account graph
+
+        ////////////////////? Report Generation ///////////////////////
+
+        const allPositions= user.Positions;
+        
+        let SetupGenerated= {}
+        for(const thisPosition of allPositions)
+        {
+            const thisPosStrategy= String(thisPosition.strategyUsed);
+
+            let thisSetup= [];
+            thisSetup.push(thisPosition.dayOfBuy);
+            thisSetup.push(thisPosition.dateOfBuy);
+            thisSetup.push(thisPosition.costPrice);
+            if(thisPosition.profit > 0) {
+                thisSetup.push(thisPosition.profit);
+                thisSetup.push(Number(thisPosition.profit)/Number(thisPosition.costPrice) * 100);
+            }
+            else {
+                thisSetup.push(0);
+                thisSetup.push(0);
+            }
+            
+            if(thisPosition.profit < 0) {
+                thisSetup.push(-Number(thisPosition.profit));
+                thisSetup.push(Number(thisPosition.profit)/Number(thisPosition.costPrice) * -100);
+            }
+            else {
+                thisSetup.push(0);
+                thisSetup.push(0);
+            }
+            
+            thisSetup.push(thisPosition.multiplier);
+            thisSetup.push(thisPosition.curBalance)
+            thisSetup.push(thisPosition.brokerage);
+
+            if(!SetupGenerated.hasOwnProperty(thisPosStrategy))
+            {
+                let tw= 0, tl= 0;
+                if(thisPosition.profit > 0)
+                    tw= 1;
+                else
+                    tl= 1;
+
+                SetupGenerated[thisPosStrategy] = {
+                    data: [thisSetup],
+                    noTrades: 1,
+                    totWins: tw,
+                    totLoss: tl
+                };
+            }
+            else
+            {
+                let tw= SetupGenerated[thisPosStrategy].totWins, tl= SetupGenerated[thisPosStrategy].totLoss, ttr= SetupGenerated[thisPosStrategy].noTrades + 1;
+                if(thisPosition.profit > 0)
+                    tw += 1;
+                else
+                    tl += 1;
+
+                SetupGenerated[thisPosStrategy].data.push(thisSetup);
+                SetupGenerated[thisPosStrategy].noTrades= ttr;
+                SetupGenerated[thisPosStrategy].totWins= tw;
+                SetupGenerated[thisPosStrategy].totLoss= tl;
+            }
+        }
+
+        let data, defaultSelection, defaultToDate, defaultForDate;
+        const keys = Object.keys(SetupGenerated);
+        const firstKey = keys[0];
+
+        if(firstKey == null || firstKey == undefined || firstKey.length == 0)
+        {
+            getThemeById(googleClientId)
+            .then(theme => {
+                // console.log("Strategies:", strategies);
+                themeThis= theme;
+                console.log("Theme this:"+ themeThis);
+                res.render("Setup-Report.ejs", 
+                {
+                    theme: themeThis,
+                    imgSrc: req.session.passport.user.profile_pic,
+                    PageTitle: "Setup Report",
+                    splineData: jabdaDabda,
+                    Name: req.session.passport.user.name.split(" ")[0],
+                    gadhbadh: "yes"
+                });
+            })
+        }
+
+        else 
+        {
+            const firstKeyData = SetupGenerated[firstKey].data;
+            let numTrades, totWin, totLos, recommendation;
+
+            if (req.session.SetupObject == undefined || req.session.SetupObject == null || req.session.SetupObject.defaultSelection == "" || req.session.SetupObject.defaultSelection.length == 0) 
+            {
+                data= firstKeyData
+                defaultSelection= firstKey;
+                defaultForDate= "";
+                defaultToDate= "";
+                numTrades= SetupGenerated[firstKey].noTrades;
+                totWin= SetupGenerated[firstKey].totWins;
+                totLos= SetupGenerated[firstKey].totLoss;
+            }
+            else
+            {
+                let selected= req.session.SetupObject.defaultSelection;
+                data= SetupGenerated[selected].data;
+                defaultForDate= req.session.SetupObject.defaultForDate,
+                defaultToDate= req.session.SetupObject.defaultToDate,
+                defaultSelection= req.session.SetupObject.defaultSelection,
+                numTrades= SetupGenerated[selected].noTrades;
+                totWin= SetupGenerated[selected].totWins;
+                totLos= SetupGenerated[selected].totLoss;
+            }
+
+            //! Rating part
+            if(totLos == 0)
+                recommendation= 5;
+            else if (totWin == 0)
+                recommendation= 1;
+            else if(Number(totWin) == Number(totLos))
+                recommendation= 3
+            else if(Number(totWin) > Number(totLos))
+                recommendation= 4
+            else if(Number(totWin) < Number(totLos))
+                recommendation= 2
+            
+            if(recommendation > user.Best_Strategy_Rating)
+            {
+                if (req.session.SetupObject == undefined || req.session.SetupObject == null || req.session.SetupObject.defaultSelection == "" || req.session.SetupObject.defaultSelection.length == 0) 
+                {
+                    user.Best_Strategy_Rating= recommendation;
+                    user.Best_Strategy= firstKey;
+                }
+                else
+                {
+                    user.Best_Strategy_Rating= recommendation;
+                    user.Best_Strategy= req.session.SetupObject.defaultSelection;
+                }
+            }
+
+            // let data= user.Setup
+
+            getThemeById(googleClientId)
+            .then(theme => {
+                // console.log("Strategies:", strategies);
+                themeThis= theme;
+                console.log("Theme this:"+ themeThis);
+                res.render("Setup-Report.ejs", 
+                {
+                    theme: themeThis,
+                    imgSrc: req.session.passport.user.profile_pic,
+                    PageTitle: "Setup Report",
+                    splineData: jabdaDabda,
+                    Name: req.session.passport.user.name.split(" ")[0],
+                    data: data,
+                    defaultForDate: defaultForDate,
+                    defaultToDate: defaultToDate,
+                    defaultSelection: defaultSelection,
+                    selectionData: Object.keys(SetupGenerated),
+                    numTrades: numTrades,
+                    totWin: totWin,
+                    totLos: totLos,
+                    recommendation: recommendation,
+                    gadhbadh: "no"
+                });
+            })
+            .catch(err => {
+                console.error("Error:", err);
+            });
+        }
+
+        
     } else {
         res.redirect("/Home")
     }
@@ -1126,8 +1328,14 @@ app.get("/ShareLog-Analysis", async (req, res)=>{
         var themeThis= user.theme;
         var randStrat= "None";
         if(user.Strategies.length > 0) {
-            const randomIndex = Math.floor(Math.random() * user.Strategies.length);
-            randStrat= user.Strategies[randomIndex][0];
+            if(user.Best_Strategy == null || user.Best_Strategy == undefined || user.Best_Strategy.length == 0)
+            {
+                const randomIndex = Math.floor(Math.random() * user.Strategies.length);
+                randStrat= user.Strategies[randomIndex][0];
+            }
+            else{
+                randStrat= user.Best_Strategy;
+            }
         }
         var busty= "None"
         if(user.Best_Day_For_Trade.length > 0)

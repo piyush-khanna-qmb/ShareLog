@@ -48,6 +48,11 @@
     flex: 1;
     justify-content: flex-end;
 }
+
+.container-chart {
+    margin-top: 2rem;
+}
+
 .container-audio-control{
     display: flex;
     margin-top: 10px;

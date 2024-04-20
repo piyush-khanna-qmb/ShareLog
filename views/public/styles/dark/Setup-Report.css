@@ -172,7 +172,7 @@
     
     /* background-color: #17181a; */
     background-color: #309b67;
-    width: 350px;
+    width: 400px;
 }
 
 .Portfolio-heading {
@@ -203,6 +203,7 @@
 }
 .hana h3 {
     text-align: right;
+    width: 80px;
 }
 .hana tr {
     border-bottom-width: 40px;
@@ -210,6 +211,23 @@
     border-color: transparent;
 }
 
+.nothingness {
+    text-align: center;
+    padding-top: 15%;
+    color: white;
+    height: 69vh;
+}
+
+.nothingness h1 {
+    color: silver;
+    padding: auto 5rem;
+    text-align: center;
+}
+
+.nothingness p {
+    padding: 0 20rem;
+    margin-top: 13rem;
+}
 
 .taraa{
     border-collapse: collapse;

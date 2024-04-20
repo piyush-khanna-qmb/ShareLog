@@ -125,3 +125,11 @@ img.profile-icon {
     margin: 0;
     padding: 0;
 }
+
+.carousel-control-prev {
+    width: 20px;
+}
+
+.carousel-control-next {
+    width: 20px;
+}

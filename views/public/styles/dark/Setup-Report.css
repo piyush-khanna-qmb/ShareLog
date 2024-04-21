@@ -61,7 +61,8 @@
 .newStrat {
     display: inline-block;
     padding: 10px 20px;
-    margin-top: 10px;
+    margin-top: 20px;
+    margin-left: 3rem;
     border: 2px solid #3bda89;
     border-radius: 50px; /* Adjust the value to make the button more or less round */
     background-color: transparent;
@@ -120,7 +121,7 @@
 .container-dropdown-buttons{
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    /* justify-content: space-between; */
 }
 .dropdown-button{
     display: flex;

@@ -321,3 +321,88 @@ p.card-text {
     font-size: 2.3rem;
     padding: 1rem 0 2rem 0;
 }
+
+.biharKeLala {
+    /* padding: 0 5rem; */
+    display: flex;
+    text-align: center;
+    align-items: center;
+    align-content: center;
+    justify-content: center;
+}
+
+.newAndSave {
+    display: flex;
+    padding: 5vh 1vh;
+}  
+.addNewStrat {
+width: 50vh;
+/* height: 5.5vh; */
+display: inline-block;
+/* background-color: #ddd; */
+}
+.addNewDesc {
+    margin-top: 10px;
+    width: 70vh;
+    height: 10vh;
+    display: inline-block;
+    background-color: #ddd;
+}
+
+.newStrat {
+    display: inline-block;
+    padding: 10px 20px;
+    margin-left: 5px;
+    border: 2px solid #3bda89;
+    border-radius: 50px; /* Adjust the value to make the button more or less round */
+    background-color: transparent;
+    color: #3bda89;
+    font-size: 16px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.newStrat:hover {
+    background-color: #3bda89;
+    color: white;
+}
+
+.container-content {
+    display: flex;
+    justify-content: space-between;
+  }
+  .dropped-description{
+    display: none;
+    }  
+.dropped-description.show {
+        display: block;
+    }
+.container-content.active .dropped-description{
+    display: block;
+}
+
+.description-here {
+    padding: 20px;
+    font-size: medium;
+}
+
+.container-right {
+    margin-right: 10vh;
+}  
+
+.container-strategies{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+#options{
+    color: white;
+    background-color: rgb(23, 24, 25); 
+    padding: 0.4rem;
+    border-width: 0.2rem;
+    border-radius: 0.2rem;
+    border-color: rgb(23, 24, 25);
+    opacity: 0.7;
+}

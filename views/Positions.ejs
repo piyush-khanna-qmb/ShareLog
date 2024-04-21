@@ -8,6 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://kit.fontawesome.com/178f732bae.js" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
     <% if (theme === "dark") { %>
         <link href="/styles/dark/vertical-navbar.css" rel="stylesheet" type="text/css">
       <% } else { %>
@@ -98,11 +100,10 @@
                 
                                 </div>
                                 
-                                <% if (item.chart==null || item.chart == undefined) { %>
-                                  <img src="/test-images/h1.jpg" class="d-block w-100" alt="...">
-                                <% } else { %>
-                                    <img src="/test-images/h2.jpg" class="d-block w-100" alt="...">
-                                <% } %>
+                                <div class="container-chart">
+                                  <div class="container-candelstick-chart" id="<%=item._id%>" style="height: 400px; width: 100%;">
+                                  </div>
+                                </div>
                                 
                                 <% console.log(String(item.audioObject)); %>
                                 
@@ -149,6 +150,7 @@
                                     <div class="input-group neecheWala">
                                         <form class="form-inline" action="/SaveDataForPos" method="post">
                                           <input type="text" hidden name="posId" value="<%=item._id%>">
+                                          <input type="text" hidden name="pageName" value="/<%=PageTitle%>">
                                           <!-- <div class="container-choose-heading">
                                             <label for="options">Strategies</label>
                                           </div> -->
@@ -210,6 +212,8 @@
     </div>
 
     <script>
+      window.onload = function () {
+
       const micButtons = document.querySelectorAll('.mic-button');
 
       micButtons.forEach(button => {
@@ -369,6 +373,141 @@
             audioPlayer.currentTime += 5;
         });
       });
+
+
+      async function renderCHarts() {
+      console.log("Rendering");
+
+    async function fetchData(userID) {
+      var url = "/getChartData";
+      var data = {
+          userID: userID
+      };
+
+      var jsonData = JSON.stringify(data);
+
+      var options = {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: jsonData
+      };
+
+      try {
+          var response = await fetch(url, options);
+          console.log(response);
+          // Check if the response is successful
+          if (!response.ok) {
+              throw new Error('Network response was not ok');
+          }
+
+          // Parse the JSON response
+          var responseData = await response.json();
+          // Process the JSON data received from the server
+          console.log("Data received:", responseData);
+          
+          // Return the data
+          return responseData;
+      } catch (error) {
+          // Handle any errors that occur during the request
+          console.error('There was a problem with the fetch operation:', error);
+          // Throw the error to propagate it to the caller
+          throw error;
+      }
+  }
+
+
+    let hui, averagedData, formattedData, chart, idd;
+    // const averagedData = calculateAverage(Response, 1);
+    
+
+    <% for(const thisPosition of carouselData ) { %>
+
+      // hui= document.getElementById("<%= thisPosition._id%>")
+      // console.log(hui);
+      idd = "<%= thisPosition._id%>";
+      averagedData = await fetchData(idd);
+      console.log(averagedData);
+      // console.log("Got chart data: ", averagedData);
+      // averagedData= Response;
+
+      formattedData = [];
+      for (let i = 0; i < averagedData.time.length; i++) {
+          const dataPoint = {
+              x: new Date(averagedData.time[i] * 1000), // Convert Unix timestamp to JavaScript Date object
+              y: [averagedData.open[i], averagedData.high[i], averagedData.low[i], averagedData.close[i]]
+          };
+          formattedData.push(dataPoint);
+      }
+      chart = new CanvasJS.Chart("<%= thisPosition._id%>", {
+        animationEnabled: true,
+        theme: "dark",
+        // title: {
+        //     text: "Candlestick Chart"
+        // },
+        zoomEnabled: true, 
+        zoomType: "xy",
+        zoomDirection: "y", 
+        panEnabled: true, 
+        panDirection: "xy",
+        exportEnabled: true,
+        backgroundColor: "#15161a", 
+        axisX: {
+            title: "Time",
+            titleFontColor: "white",
+            titleFontSize: 15,
+            valueFormatString: "HH:mm",
+            interval: 1,
+            intervalType: "minute",
+            labelFontColor: "#15161a",
+            labelWrap: true,
+            labelAutoFit: true,
+            crosshair: {
+              enabled: true,
+              color: "orange",
+              labelFontColor: "#F8F8F8"
+            },
+        },
+        axisY: {
+            title: "Price",
+            titleFontColor: "white",
+            titleFontSize: 15,
+            includeZero: false,
+            labelFontColor: "#cccccc",
+            position: "right",
+            includeZero: false,
+            crosshair: {
+              enabled: true,
+              color: "orange",
+              labelFontColor: "#F8F8F8"
+            }
+        },
+        toolTip: {
+          animationEnabled: true,
+          cornerRadius: 15,
+          backgroundColor: "silver",
+          // fontColor: "white"
+        },
+        // data: datat
+        data: [{
+            type: "candlestick",
+            risingColor: "#00ff00",
+            fallingColor: "#ff0000",
+            color: "#15161a",
+            dataPoints: formattedData
+        }]
+      });
+
+      chart.render();
+    <% } %>
+    }
+    
+    renderCHarts()
+    $('#carouselExample').on('slid.bs.carousel', function () {
+      renderCHarts()
+    })
+    }
     </script>
 
 </body>

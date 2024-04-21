@@ -14,7 +14,7 @@ const { MongoClient, Binary, ObjectId } = require('mongodb');
 // const { list } = require('parser');
 const { Strategy } = require('passport-google-oauth20');
 const app = express();
-const port = 3000;
+const port =  process.env.PORT|| 3000;
 
 app.use(body_parser.json({ limit: '50mb' }));
 app.use(express.json());

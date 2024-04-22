@@ -321,7 +321,8 @@ app.get("/", function(req, res) {
     }
 })
 
-app.get('/logo.png', (req, res) => {
+app.get('/getLogo', (req, res) => {
+    console.log("Bhaang bharosa!", String(path.join(__dirname, '/views/public/test-images/logo.png')));
 	res.sendFile(path.join(__dirname, '/views/public/test-images/logo.png'))
 })
 
@@ -392,6 +393,7 @@ app.post('/razorpay', async (req, res) => {
 
 	try {
 		const response = await razorpay.orders.create(options)
+        console.log("Bhaang bharosa!", String(path.join(__dirname, '/views/public/test-images/logo.png')));
 		console.log("Response deadly: ", response)
 		res.json({
 			id: response.id,

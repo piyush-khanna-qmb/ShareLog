@@ -132,11 +132,8 @@
                     order_id: data.id,
                     name: 'ShareLog Premium',
                     description: 'Thank you for nothing. Please give us some money',
-                    image: 'https://www.pngitem.com/pimgs/m/185-1850038_download-sample-png-file-download-sample-jpg-file.png',
+                    image: 'https://www.sharelog.in/getLogo',
                     handler: function (response) {
-                        alert(response.razorpay_payment_id)
-                        alert(response.razorpay_order_id)
-                        alert(response.razorpay_signature)
                         window.location.href= "/Dashboard"
                     },
                     prefill: {

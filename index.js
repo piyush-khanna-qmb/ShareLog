@@ -348,7 +348,6 @@ app.post('/verification', async (req, res) => {
 	if (digest === req.headers['x-razorpay-signature']) {
 		console.log('request is legit')
         console.log("Body is:", req.body);
-        require('fs').writeFileSync('payment1.json', JSON.stringify(req.body, null, 4))
         try {
             if(req.body.account_id == undefined || req.body.account_id==null || String(req.body.account_id).length == 0) 
             {

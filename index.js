@@ -11,6 +11,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const findOrCreate = require("mongoose-findorcreate");
 const { use } = require('passport');
 const mongoose = require('mongoose');
+const cors = require('cors')
 const request = require('request');
 const Razorpay = require('razorpay')
 const { MongoClient, Binary, ObjectId } = require('mongodb');
@@ -19,6 +20,7 @@ const { Strategy } = require('passport-google-oauth20');
 const app = express();
 const port =  process.env.PORT|| 3000;
 
+app.use(cors())
 app.use(body_parser.json({ limit: '50mb' }));
 app.use(express.json());
 app.set('view engine', 'ejs');
@@ -319,7 +321,7 @@ app.get("/", function(req, res) {
 })
 
 app.get('/logo.png', (req, res) => {
-	res.sendFile(path.join(__dirname, '/test-images/logo.svg'))
+	res.sendFile(path.join(__dirname, 'views/public/test-images/logo.svg'))
 })
 
 const razorpay = new Razorpay({

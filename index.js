@@ -1,5 +1,7 @@
 require('dotenv').config();
 const ejs = require("ejs")
+const path = require('path')
+const shortid = require('shortid')
 const express = require('express');
 const body_parser = require('body-parser');
 const session = require("express-session");
@@ -10,6 +12,7 @@ const findOrCreate = require("mongoose-findorcreate");
 const { use } = require('passport');
 const mongoose = require('mongoose');
 const request = require('request');
+const Razorpay = require('razorpay')
 const { MongoClient, Binary, ObjectId } = require('mongodb');
 // const { list } = require('parser');
 const { Strategy } = require('passport-google-oauth20');
@@ -315,21 +318,97 @@ app.get("/", function(req, res) {
     }
 })
 
+app.get('/logo.png', (req, res) => {
+	res.sendFile(path.join(__dirname, '/test-images/logo.svg'))
+})
+
+const razorpay = new Razorpay({
+	key_id: 'rzp_live_02SQsUjFIPjm1R',
+	key_secret: 'TiGnwOLjFFr2LlY9bSra3W44'
+})
+
+app.post('/verification', async (req, res) => {
+	// do a validation
+	const secret = 'prasheek@3062001'
+
+	console.log(req.body)
+
+	const crypto = require('crypto')
+
+	const shasum = crypto.createHmac('sha256', secret)
+	shasum.update(JSON.stringify(req.body))
+	const digest = shasum.digest('hex')
+
+	console.log(digest, req.headers['x-razorpay-signature'])
+
+	if (digest === req.headers['x-razorpay-signature']) {
+		console.log('request is legit')
+        console.log("Body is:", req.body);
+        try {
+            if(req.body.id == undefined || req.body.id==null || String(req.body.id).length == 0) 
+            {
+                console.log("Failed payment");
+            }
+            else
+            {
+                const doc = await User.findOne({ google_client_id: req.session.passport.user.google_client_id });
+                doc.razorpay_id= String(req.body.id);
+                doc.period= "permanent";
+                await doc.save(); // Save the changes
+                console.log("Successfully updated 'razorpay id'");
+            }        
+        } catch (error) {
+            console.error("Error updating 'razorpay':", error);
+        }
+        res.redirect("/Dashboard");
+	} else {
+		// pass it
+	}
+	res.json({ status: 'ok' })
+})
+
+app.post('/razorpay', async (req, res) => {
+	const payment_capture = 1
+	const amount = 1
+	const currency = 'INR'
+
+	const options = {
+		amount: amount * 100,
+		currency,
+		receipt: shortid.generate(),
+		payment_capture
+	}
+
+	try {
+		const response = await razorpay.orders.create(options)
+		console.log("Response deadly: ", response)
+		res.json({
+			id: response.id,
+			currency: response.currency,
+			amount: response.amount
+		})
+	} catch (error) {
+		console.log(error)
+	}
+})
+
 app.post("/razorpayCallback", async function (req, res) {
     console.log(req.body.razorpay_payment_id);
     try {
-        const doc = await User.findOne({ google_client_id: req.session.passport.user.google_client_id });
-
-        if (doc) {
-            doc.razorpay_id= req.body.razorpay_payment_id;
+        if(req.body.razorpay_payment_id == undefined || req.body.razorpay_payment_id==null || String(req.body.razorpay_payment_id).length == 0) 
+        {
+            console.log("Failed payment");
+        }
+        else
+        {
+            const doc = await User.findOne({ google_client_id: req.session.passport.user.google_client_id });
+            doc.razorpay_id= String(req.body.razorpay_payment_id);
             doc.period= "permanent";
             await doc.save(); // Save the changes
             console.log("Successfully updated 'razorpay id'");
-        } else {
-            console.log("Document with google_id not found.");
-        }
+        }        
     } catch (error) {
-        console.error("Error updating 'zerodha_id':", error);
+        console.error("Error updating 'razorpay':", error);
     }
     res.redirect("/Dashboard")
 })
@@ -2933,7 +3012,7 @@ app.get("/Dashboard", async (req, res)=>{
                         }
                         
                         aajKiDateWalaObject.securityIds.push(secId);
-                        aajKiDateWalaObject.save({ suppressWarning: true });
+                        await aajKiDateWalaObject.save({ suppressWarning: true });
                         await user.save();
                     }
                 }
@@ -3973,7 +4052,7 @@ app.post("/welcome", async function (req, res) {
                 doc.email= req.body.email;
             }
             await doc.save(); // Save the changes
-            console.log("Successfully uadded new user");
+            console.log("Successfully added new user");
         } else {
             console.log("Document with google_id not found.");
         }

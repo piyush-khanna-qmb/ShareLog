@@ -2736,210 +2736,227 @@ app.get("/Dashboard", async (req, res)=>{
         const googleClientId= req.session.passport.user.google_client_id;
         const user = await User.findOne({ google_client_id: googleClientId });
 
-        // let allPositions = await generateFakePosition();
-        let allPositions = await getAllPositions();
-        console.log(allPositions);
-
-        //! Extract and add all positions
-        let i= 0;
-        for (const thisPosition of allPositions) 
-        {
-            let positionExists = false;
-            for (const position of user.Positions) 
-            {
-                if (position.securityId === thisPosition.securityId) {
-                    positionExists = true;
-                    console.log("Position already exists in DB. Skipping");
-                    break;
-                }
-            }
-            if(!positionExists) 
-            {
-                console.log("New position. Storing it to DB");
-                console.log("Retrieving chart for this position from Dhan");
-
-                var chartData;
-                try {
-                    i+=1;
-                    if(i==2) {
-                        console.log("Asli try");
-                        chartData= await getChartData(thisPosition.securityId , "NSE_FNO", "OPTIDX");
-                    }
-                    else
-                        chartData= getFakeChartData();
-                }
-                catch(err) {
-                    chartData= null;
-                }
-
-                user.Total_Positions++;
-                user.Total_Trades++;
-
-                console.log(typeof(chartData));
-                console.log(chartData);
-                if(chartData != null && String(chartData.errorCode).toLowerCase() === "none") {
-                    console.log("Chart lost as application not opened");
-                    chartData= getFakeChartData();
-                } 
-                
-                var huiChart= {};
-                huiChart.open= chartData.open;
-                huiChart.high= chartData.high;
-                huiChart.low= chartData.low;
-                huiChart.close= chartData.close;
-                huiChart.time= chartData.start_Time;
-
-                chartData= huiChart;
-
-                //! Make amendments for biggest loss, profit etc
-                user.Total_Brokerage+= thisPosition.unrealizedProfit;
-
-                if(thisPosition.realizedProfit > user.Biggest_Profit) {
-                    user.Biggest_Profit = thisPosition.realizedProfit;
-                    user.Best_Day_For_Trade= getLocalDayName();
-                    user.Best_Lot_Size= thisPosition.buyQty;
-                }
-
-                if(thisPosition.realizedProfit < user.Biggest_Loss)
-                    user.Biggest_Loss = thisPosition.realizedProfit;
-
-                user.NetPnL += (thisPosition.realizedProfit - thisPosition.unrealizedProfit);
-
-               //! Setup charts yahaan nahi benenge kyuki is vaqt ye tey nhi hota ki konsi strategy dalegi isme
-
-                //! Save pos object
-                const positionData = {
-                    securityId: thisPosition.securityId,
-                    tradingSymbol: thisPosition.tradingSymbol,
-                    audioObject: null,
-                    text: "",
-                    posType: thisPosition.positionType,
-                    segmentType: thisPosition.exchangeSegment,
-                    costPrice: thisPosition.costPrice,
-                    buyQty: thisPosition.buyQty,
-                    profit: thisPosition.realizedProfit,
-                    brokerage: thisPosition.unrealizedProfit,
-                    drvExpiryDate: thisPosition.drvExpiryDate,
-                    chart: chartData,
-                    dateOfBuy: getLocalDate(),
-                    dayOfBuy: getLocalDayName(),
-                    strategyUsed: "",
-                    multiplier: thisPosition.multiplier,
-                    curBalance: await getCurBalance()
-                };
-
-                var newPosition = new Position(positionData);
-                user.Positions.push(newPosition);
-                await user.save();
-                console.log("Chart saved");
-            }
+        const startDate= user.start_day;
+        const futureDate = getEndDate(startDate);
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0'); // January is 0
+        const year = today.getFullYear();
+        const todaysDate = `${day}-${month}-${year}`;
+        console.log("Janaab ki aakhri date hai: ", futureDate, typeof(futureDate));
+        // console.log("Aaj ki date hai: ", todaysDate, typeof(todaysDate));
+        
+        if (futureDate == todaysDate && user.period == "trial") {
+            // Aakhri waqt aa gya
+            res.redirect("/Buy")
         }
-
-        //! Calendar Work
-        for (const thisPosition of allPositions)
+        else 
         {
-            let posType;
-            if(String(thisPosition.exchangeSegment).toLowerCase().includes("fno"))
-                posType= "fno";
-            else if(String(thisPosition.exchangeSegment).toLowerCase().includes("eq"))
-                posType= "eq";
-            else if(String(thisPosition.exchangeSegment).toLowerCase().includes("comm"))
-                posType= "comm";
-            else if(String(thisPosition.exchangeSegment).toLowerCase().includes("curr"))
-                posType= "curr";
-            
-            const secId= thisPosition.securityId;
+        // let allPositions = await generateFakePosition();
+            let allPositions = await getAllPositions();
+            console.log(allPositions);
 
-            const aajKiDateWalaObject= await findCalendarEntryForToday(user);
-            console.log(aajKiDateWalaObject);
-            if(typeof aajKiDateWalaObject === "string")
+            //! Extract and add all positions
+            let i= 0;
+            for (const thisPosition of allPositions) 
             {
-                console.log("Calendar object not found. Banana padega");
-                
-                //! Get Balance
-                const curBal= await getCurBalance();
-
-                //! make Calendar object 
-                let fno= 0, eq= 0, comm= 0, curr= 0;
-                if (posType === "fno") {
-                    fno++;
-                    user.Total_FAndO++;
-                }
-                else if (posType === "eq"){
-                    eq++;
-                    user.Total_Equities++;
-                }
-                else if (posType === "comm"){
-                    comm++;
-                    user.Total_Commodities++;
-                }
-                else if (posType === "curr"){
-                    curr++;
-                    user.Total_Currencies++;
-                }
-
-                const calendar = new Calendar({
-                    securityIds: [secId],
-                    date: getLocalDate(),
-                    equity: eq,
-                    fAndO: fno,
-                    commodity: comm,
-                    currency: curr,
-                    balance: curBal
-                });
-
-                //! Save in user
-                await calendar.save();
-                await user.Calendar.push(calendar);
-                await user.save();
-            }
-            else
-            {
-                console.log("Ek calendar mila hai");
-
-                if(!aajKiDateWalaObject.securityIds.includes(secId))
+                let positionExists = false;
+                for (const position of user.Positions) 
                 {
-                    if (posType === "fno"){
-                        aajKiDateWalaObject.fAndO++;
+                    if (position.securityId === thisPosition.securityId) {
+                        positionExists = true;
+                        console.log("Position already exists in DB. Skipping");
+                        break;
+                    }
+                }
+                if(!positionExists) 
+                {
+                    console.log("New position. Storing it to DB");
+                    console.log("Retrieving chart for this position from Dhan");
+
+                    var chartData;
+                    try {
+                        i+=1;
+                        if(i==2) {
+                            console.log("Asli try");
+                            chartData= await getChartData(thisPosition.securityId , "NSE_FNO", "OPTIDX");
+                        }
+                        else
+                            chartData= getFakeChartData();
+                    }
+                    catch(err) {
+                        chartData= null;
+                    }
+
+                    user.Total_Positions++;
+                    user.Total_Trades++;
+
+                    console.log(typeof(chartData));
+                    console.log(chartData);
+                    if(chartData != null && String(chartData.errorCode).toLowerCase() === "none") {
+                        console.log("Chart lost as application not opened");
+                        chartData= getFakeChartData();
+                    } 
+                    
+                    var huiChart= {};
+                    huiChart.open= chartData.open;
+                    huiChart.high= chartData.high;
+                    huiChart.low= chartData.low;
+                    huiChart.close= chartData.close;
+                    huiChart.time= chartData.start_Time;
+
+                    chartData= huiChart;
+
+                    //! Make amendments for biggest loss, profit etc
+                    user.Total_Brokerage+= thisPosition.unrealizedProfit;
+
+                    if(thisPosition.realizedProfit > user.Biggest_Profit) {
+                        user.Biggest_Profit = thisPosition.realizedProfit;
+                        user.Best_Day_For_Trade= getLocalDayName();
+                        user.Best_Lot_Size= thisPosition.buyQty;
+                    }
+
+                    if(thisPosition.realizedProfit < user.Biggest_Loss)
+                        user.Biggest_Loss = thisPosition.realizedProfit;
+
+                    user.NetPnL += (thisPosition.realizedProfit - thisPosition.unrealizedProfit);
+
+                //! Setup charts yahaan nahi benenge kyuki is vaqt ye tey nhi hota ki konsi strategy dalegi isme
+
+                    //! Save pos object
+                    const positionData = {
+                        securityId: thisPosition.securityId,
+                        tradingSymbol: thisPosition.tradingSymbol,
+                        audioObject: null,
+                        text: "",
+                        posType: thisPosition.positionType,
+                        segmentType: thisPosition.exchangeSegment,
+                        costPrice: thisPosition.costPrice,
+                        buyQty: thisPosition.buyQty,
+                        profit: thisPosition.realizedProfit,
+                        brokerage: thisPosition.unrealizedProfit,
+                        drvExpiryDate: thisPosition.drvExpiryDate,
+                        chart: chartData,
+                        dateOfBuy: getLocalDate(),
+                        dayOfBuy: getLocalDayName(),
+                        strategyUsed: "",
+                        multiplier: thisPosition.multiplier,
+                        curBalance: await getCurBalance()
+                    };
+
+                    var newPosition = new Position(positionData);
+                    user.Positions.push(newPosition);
+                    await user.save();
+                    console.log("Chart saved");
+                }
+            }
+
+            //! Calendar Work
+            for (const thisPosition of allPositions)
+            {
+                let posType;
+                if(String(thisPosition.exchangeSegment).toLowerCase().includes("fno"))
+                    posType= "fno";
+                else if(String(thisPosition.exchangeSegment).toLowerCase().includes("eq"))
+                    posType= "eq";
+                else if(String(thisPosition.exchangeSegment).toLowerCase().includes("comm"))
+                    posType= "comm";
+                else if(String(thisPosition.exchangeSegment).toLowerCase().includes("curr"))
+                    posType= "curr";
+                
+                const secId= thisPosition.securityId;
+
+                const aajKiDateWalaObject= await findCalendarEntryForToday(user);
+                console.log(aajKiDateWalaObject);
+                if(typeof aajKiDateWalaObject === "string")
+                {
+                    console.log("Calendar object not found. Banana padega");
+                    
+                    //! Get Balance
+                    const curBal= await getCurBalance();
+
+                    //! make Calendar object 
+                    let fno= 0, eq= 0, comm= 0, curr= 0;
+                    if (posType === "fno") {
+                        fno++;
                         user.Total_FAndO++;
                     }
                     else if (posType === "eq"){
-                        aajKiDateWalaObject.equity++;
+                        eq++;
                         user.Total_Equities++;
                     }
                     else if (posType === "comm"){
-                        aajKiDateWalaObject.commodity++;
+                        comm++;
                         user.Total_Commodities++;
                     }
                     else if (posType === "curr"){
-                        aajKiDateWalaObject.currency++;
+                        curr++;
                         user.Total_Currencies++;
                     }
-                    
-                    aajKiDateWalaObject.securityIds.push(secId);
-                    aajKiDateWalaObject.save({ suppressWarning: true });
+
+                    const calendar = new Calendar({
+                        securityIds: [secId],
+                        date: getLocalDate(),
+                        equity: eq,
+                        fAndO: fno,
+                        commodity: comm,
+                        currency: curr,
+                        balance: curBal
+                    });
+
+                    //! Save in user
+                    await calendar.save();
+                    await user.Calendar.push(calendar);
                     await user.save();
                 }
-            }
-        }
+                else
+                {
+                    console.log("Ek calendar mila hai");
 
-        var themeThis= user.theme;
-        res.render("Dashboard.ejs", {
-            theme: themeThis,
-            imgSrc: req.session.passport.user.profile_pic,
-            PageTitle: "Dashboard",
-            Name: req.session.passport.user.name.split(" ")[0],
-            // DateBought: formattedDate,
-            // DayBought: dayNames[dayy],
-            TypePosOrHold: "P&L",
-            PAndL: Number(user.NetPnL).toFixed(2),
-            TotStrats: user.Strategies.length,
-            TotPos: user.Total_Positions,
-            TotHolds: user.Total_Holdings,
-            Amount: Number(user.NetPnL).toFixed(2),
-            carouselData: user.Positions,
-            Strategies: user.Strategies
-        });
+                    if(!aajKiDateWalaObject.securityIds.includes(secId))
+                    {
+                        if (posType === "fno"){
+                            aajKiDateWalaObject.fAndO++;
+                            user.Total_FAndO++;
+                        }
+                        else if (posType === "eq"){
+                            aajKiDateWalaObject.equity++;
+                            user.Total_Equities++;
+                        }
+                        else if (posType === "comm"){
+                            aajKiDateWalaObject.commodity++;
+                            user.Total_Commodities++;
+                        }
+                        else if (posType === "curr"){
+                            aajKiDateWalaObject.currency++;
+                            user.Total_Currencies++;
+                        }
+                        
+                        aajKiDateWalaObject.securityIds.push(secId);
+                        aajKiDateWalaObject.save({ suppressWarning: true });
+                        await user.save();
+                    }
+                }
+            }
+
+            var themeThis= user.theme;
+            res.render("Dashboard.ejs", {
+                theme: themeThis,
+                imgSrc: req.session.passport.user.profile_pic,
+                PageTitle: "Dashboard",
+                Name: req.session.passport.user.name.split(" ")[0],
+                // DateBought: formattedDate,
+                // DayBought: dayNames[dayy],
+                TypePosOrHold: "P&L",
+                PAndL: Number(user.NetPnL).toFixed(2),
+                TotStrats: user.Strategies.length,
+                TotPos: user.Total_Positions,
+                TotHolds: user.Total_Holdings,
+                Amount: Number(user.NetPnL).toFixed(2),
+                carouselData: user.Positions,
+                Strategies: user.Strategies
+            });
+        }   
 
     } else {
         console.log("Jabardasti ki entry");
@@ -3812,6 +3829,31 @@ async function getThemeById(googleClientId) {
     }
 }
 
+function getEndDate(date) {
+    // Split the input date into day, month, and year
+    const [day, month, year] = date.split('-').map(Number);
+
+    // Create a new Date object
+    const inputDate = new Date(year, month - 1, day); // Month is zero-based in Date object
+
+    // Add 14 days to the input date
+    const futureDate = new Date(inputDate);
+    futureDate.setDate(inputDate.getDate() + 14);
+
+    // Get the components of the future date
+    const futureDay = futureDate.getDate();
+    const futureMonth = futureDate.getMonth() + 1; // Month is zero-based, so add 1
+    const futureYear = futureDate.getFullYear();
+
+    // Format the components to ensure they have two digits
+    const formattedDay = String(futureDay).padStart(2, '0');
+    const formattedMonth = String(futureMonth).padStart(2, '0');
+    const formattedYear = futureYear;
+
+    // Return the formatted future date
+    return `${formattedDay}-${formattedMonth}-${formattedYear}`;
+}
+
 app.get("/Profile", async (req, res)=>{
     if(req.isAuthenticated()) {
         var themeThis= "none";
@@ -3821,6 +3863,11 @@ app.get("/Profile", async (req, res)=>{
         try {
             // Find the document with the given 'google_id'
             const doc = await User.findOne({ google_client_id: googleClientId });
+            const startDate= doc.start_day;
+            const futureDate = getEndDate(startDate);
+            const huiui= getDateForDashboard(futureDate)
+
+            console.log("Account will cease on: ", huiui);
     
             res.render("Profile.ejs", 
             {
@@ -3834,7 +3881,7 @@ app.get("/Profile", async (req, res)=>{
                 userEmail: doc.email,
                 userContact: doc.contact,
                 accType: doc.period,
-                endDate: "20th Sept, 2069"
+                endDate: huiui
             });
 
         } catch (error) {
@@ -3941,8 +3988,27 @@ app.post("/welcome", async function (req, res) {
     }
 })
 
-app.get("/Buy", function (req, res) {
-    res.render("Buy.ejs")
+function daysPassedSince(startDateStr) {
+    const startDateParts = startDateStr.split('-');
+    const startDate = new Date(`${startDateParts[2]}-${startDateParts[1]}-${startDateParts[0]}`); // Format: yyyy-mm-dd
+    const today = new Date();
+    
+    // Calculate the difference in milliseconds
+    const timeDifference = today.getTime() - startDate.getTime();
+    
+    // Convert milliseconds to days
+    const daysPassed = Math.floor(timeDifference / (1000 * 3600 * 24));
+
+    return daysPassed;
+}
+
+app.get("/Buy", async function (req, res) {
+    const doc = await User.findOne({ google_client_id: req.session.passport.user.google_client_id });
+    const startDate= doc.start_day;
+    const daysLeft= 14 - (daysPassedSince(startDate));
+    res.render("Buy.ejs", {
+        daysLeft: daysLeft
+    });
 })
 
 app.listen(port, ()=>{

@@ -327,8 +327,8 @@ app.get('/getLogo', (req, res) => {
 })
 
 const razorpay = new Razorpay({
-	key_id: 'rzp_test_0lh46Y9yL9HwvG',
-	key_secret: 'qtdvLg8nPJdL8baFTc2XGOHO'
+	key_id: 'rzp_live_02SQsUjFIPjm1R',
+	key_secret: 'TiGnwOLjFFr2LlY9bSra3W44'
 })
 
 var mainUserId;

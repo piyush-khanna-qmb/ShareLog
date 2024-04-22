@@ -17,6 +17,7 @@ const Razorpay = require('razorpay')
 const { MongoClient, Binary, ObjectId } = require('mongodb');
 // const { list } = require('parser');
 const { Strategy } = require('passport-google-oauth20');
+const { stat } = require('fs');
 const app = express();
 const port =  process.env.PORT|| 3000;
 
@@ -215,7 +216,7 @@ passport.deserializeUser(function(id, done) {
 passport.use("google", new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
-    callbackURL: "https://www.sharelog.in/auth/google/ShareLog",
+    callbackURL: "http://localhost:3000/auth/google/ShareLog",
     userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
   },
   async function(accessToken, refreshToken, profile, cb) {
@@ -347,32 +348,30 @@ app.post('/verification', async (req, res) => {
 
 		console.log('request is legit')
         console.log("Body is:", req.body);
-        // try {
-        //     if(req.body.account_id == undefined || req.body.account_id==null || String(req.body.account_id).length == 0) 
-        //     {
-        //         console.log("Failed payment");
-        //     }
-        //     else
-        //     {
-        //         console.log("Printing user id in verify: ", mainUserId);
-        //         const doc = await User.findOne({ google_client_id: mainUserId });
-        //         doc.razorpay_id= String(req.body.account_id);
-        //         doc.period= "permanent";
-        //         await doc.save(); // Save the changes
-        //         console.log("Successfully updated 'razorpay id'");
-        //     }        
-        // } catch (error) {
-        //     console.error("Error updating 'razorpay':", error);
-        // }
-        console.log("Entity is: ", req.body.payload.payment.entity);
-        console.log("Notes are: ", req.body.payload.payment.entity.notes);
-        // console.log("Printing user id in verify: ", mainUserId);
-        // const doc = await User.findOne({ google_client_id: mainUserId });
-        // doc.razorpay_id= String(req.body.account_id);
-        // doc.period= "permanent";
-        // await doc.save(); // Save the changes
-        console.log("Successfully updated 'razorpay id'");
-    res.json({ status: 'ok' })
+        try {
+            const status= req.body.payload.payment.order.entity.status;
+            if(status == "paid") 
+            {
+                console.log("Entity is: ", req.body.payload.payment.entity);
+                console.log("Notes are: ", req.body.payload.payment.entity.notes);
+                const reqGoogId= req.body.payload.payment.entity.notes.googId;
+                console.log("Printing user id in verify: ", reqGoogId);
+
+                const doc = await User.findOne({ google_client_id: reqGoogId });
+                doc.razorpay_id= String(req.body.account_id);
+                doc.period= "permanent";
+                await doc.save(); // Save the changes
+                console.log("Successfully updated 'razorpay id'");
+            }
+            else {
+                console.log("Bullshit ho gyi payment ki");
+            }   
+        } catch (error) {
+            console.error("Payment failed");
+            console.log("Payment failed");
+        }
+
+        res.json({ status: 'ok' })
 
 })
 
@@ -381,9 +380,12 @@ app.post('/razorpay', async (req, res) => {
 	const amount = 1
 	const currency = 'INR'
 
+    const googId= req.session.passport.user.google_client_id;
+
 	const options = {
 		amount: amount * 100,
 		currency,
+        notes: {googId: googId},
 		receipt: shortid.generate(),
 		payment_capture
 	}
@@ -394,7 +396,8 @@ app.post('/razorpay', async (req, res) => {
 		res.json({
 			id: response.id,
 			currency: response.currency,
-			amount: response.amount
+			amount: response.amount,
+            notes: response.notes
 		})
 	} catch (error) {
 		console.log(error)
@@ -3922,7 +3925,7 @@ function getEndDate(date) {
     const [day, month, year] = date.split('-').map(Number);
 
     // Create a new Date object
-    const inputDate = new Date(year, month - 1, day); // Month is zero-based in Date object
+    const inputDate = new Date(year, month, day); // Month is zero-based in Date object
 
     // Add 14 days to the input date
     const futureDate = new Date(inputDate);

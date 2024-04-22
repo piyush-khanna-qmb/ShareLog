@@ -112,8 +112,15 @@
                 console.log("Click hua ji");
 
                 const res = await loadScript('https://checkout.razorpay.com/v1/checkout.js')
-                
-                const data = await fetch('https://www.sharelog.in/razorpay', { method: 'POST' }).then((t) =>
+                const additionalData = {
+                    key1: 'value1',
+                    key2: 'value2'
+                };
+                const data = await fetch('http://localhost:3000/razorpay', { method: 'POST' ,
+                    body: JSON.stringify({  
+                    notes: additionalData
+                })
+                }).then((t) =>
                     t.json()
                 )
                 console.log(data)
@@ -127,15 +134,18 @@
                     description: 'Thank you for nothing. Please give us some money',
                     image: 'https://www.pngitem.com/pimgs/m/185-1850038_download-sample-png-file-download-sample-jpg-file.png',
                     handler: function (response) {
-                        // alert(response.razorpay_payment_id)
-                        // alert(response.razorpay_order_id)
-                        // alert(response.razorpay_signature)
+                        alert(response.razorpay_payment_id)
+                        alert(response.razorpay_order_id)
+                        alert(response.razorpay_signature)
+                        window.location.href= "/Dashboard"
                     },
                     prefill: {
                         name,
                         email: 'someone@gmail.com',
-                        phone_number: '9999999999'
-                    }
+                        phone_number: '9999999999',
+                        kk: "Hello"
+                    },
+                    notes: data.notes
                 }
                 const paymentObject = new window.Razorpay(options)
                 paymentObject.open()

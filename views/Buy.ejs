@@ -119,7 +119,7 @@
                 console.log(data)
 
                 const options = {
-                    key: 'rzp_live_02SQsUjFIPjm1R',
+                    key: 'rzp_test_0lh46Y9yL9HwvG',
                     currency: data.currency,
                     amount: data.amount.toString(),
                     order_id: data.id,
@@ -127,9 +127,9 @@
                     description: 'Thank you for nothing. Please give us some money',
                     image: 'https://www.pngitem.com/pimgs/m/185-1850038_download-sample-png-file-download-sample-jpg-file.png',
                     handler: function (response) {
-                        alert(response.razorpay_payment_id)
-                        alert(response.razorpay_order_id)
-                        alert(response.razorpay_signature)
+                        // alert(response.razorpay_payment_id)
+                        // alert(response.razorpay_order_id)
+                        // alert(response.razorpay_signature)
                     },
                     prefill: {
                         name,

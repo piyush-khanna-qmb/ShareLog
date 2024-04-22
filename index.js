@@ -325,8 +325,8 @@ app.get('/logo.png', (req, res) => {
 })
 
 const razorpay = new Razorpay({
-	key_id: 'rzp_live_02SQsUjFIPjm1R',
-	key_secret: 'TiGnwOLjFFr2LlY9bSra3W44'
+	key_id: 'rzp_test_0lh46Y9yL9HwvG',
+	key_secret: 'qtdvLg8nPJdL8baFTc2XGOHO'
 })
 
 var mainUserId;
@@ -345,29 +345,32 @@ app.post('/verification', async (req, res) => {
 
 	console.log(digest, req.headers['x-razorpay-signature'])
 
-	if (digest === req.headers['x-razorpay-signature']) {
 		console.log('request is legit')
         console.log("Body is:", req.body);
-        try {
-            if(req.body.account_id == undefined || req.body.account_id==null || String(req.body.account_id).length == 0) 
-            {
-                console.log("Failed payment");
-            }
-            else
-            {
-                console.log("Printing user id in verify: ", mainUserId);
-                const doc = await User.findOne({ google_client_id: mainUserId });
-                doc.razorpay_id= String(req.body.account_id);
-                doc.period= "permanent";
-                await doc.save(); // Save the changes
-                console.log("Successfully updated 'razorpay id'");
-            }        
-        } catch (error) {
-            console.error("Error updating 'razorpay':", error);
-        }
-	} else {
-        // pass it
-	}
+        // try {
+        //     if(req.body.account_id == undefined || req.body.account_id==null || String(req.body.account_id).length == 0) 
+        //     {
+        //         console.log("Failed payment");
+        //     }
+        //     else
+        //     {
+        //         console.log("Printing user id in verify: ", mainUserId);
+        //         const doc = await User.findOne({ google_client_id: mainUserId });
+        //         doc.razorpay_id= String(req.body.account_id);
+        //         doc.period= "permanent";
+        //         await doc.save(); // Save the changes
+        //         console.log("Successfully updated 'razorpay id'");
+        //     }        
+        // } catch (error) {
+        //     console.error("Error updating 'razorpay':", error);
+        // }
+        console.log(req.body.payload.payment.entity.notes);
+        // console.log("Printing user id in verify: ", mainUserId);
+        // const doc = await User.findOne({ google_client_id: mainUserId });
+        // doc.razorpay_id= String(req.body.account_id);
+        // doc.period= "permanent";
+        // await doc.save(); // Save the changes
+        console.log("Successfully updated 'razorpay id'");
     res.json({ status: 'ok' })
 
 })

@@ -282,6 +282,22 @@ app.get("/HandleNew", function (req, res) {
     }
 })
 
+app.get("/support", function (req, res) {
+    res.render("support.ejs")
+})
+
+app.get("/terms-of-use", function (req, res) {
+    res.render("termsOfUse.ejs")
+})
+
+app.get("/privacy-policy", function (req, res) {
+    res.render("privacy-policy.ejs")
+})
+
+app.get("/cancellation", function (req, res) {
+    res.render("refund.ejs")
+})
+
 app.get("/logout", function (req, res) {
     req.session.destroy(function (err) {
         res.redirect('/');

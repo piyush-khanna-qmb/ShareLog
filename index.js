@@ -321,7 +321,7 @@ app.get("/", function(req, res) {
 })
 
 app.get('/logo.png', (req, res) => {
-	res.sendFile(path.join(__dirname, 'views/public/test-images/logo.svg'))
+	res.sendFile(path.join(__dirname, '/views/public/test-images/logo.svg'))
 })
 
 const razorpay = new Razorpay({
@@ -346,15 +346,16 @@ app.post('/verification', async (req, res) => {
 	if (digest === req.headers['x-razorpay-signature']) {
 		console.log('request is legit')
         console.log("Body is:", req.body);
+        require('fs').writeFileSync('payment1.json', JSON.stringify(req.body, null, 4))
         try {
-            if(req.body.id == undefined || req.body.id==null || String(req.body.id).length == 0) 
+            if(req.body.account_id == undefined || req.body.account_id==null || String(req.body.account_id).length == 0) 
             {
                 console.log("Failed payment");
             }
             else
             {
                 const doc = await User.findOne({ google_client_id: req.session.passport.user.google_client_id });
-                doc.razorpay_id= String(req.body.id);
+                doc.razorpay_id= String(req.body.account_id);
                 doc.period= "permanent";
                 await doc.save(); // Save the changes
                 console.log("Successfully updated 'razorpay id'");

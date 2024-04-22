@@ -118,44 +118,6 @@
                 )
                 console.log(data)
 
-                // var options = {
-                //     callback_url: '/razorpayCallback',
-                //     redirect: true,
-                //     "key": "rzp_test_l6p9RxLMZmHQRS",
-                //     // "key": "rzp_live_02SQsUjFIPjm1R",
-                //     "amount": "19900",
-                //     "currency": "INR",
-                //     "name": "ShareLog Premium",
-                //     "description": "ShareLog Premium Transaction",
-                //     "image": "/test-images/logo.png",
-                //     "order_id": orderId,
-                //     "handler": function(response) {
-
-                //         var settings = {
-                //             "url": "/api/payment/verify",
-                //             "method": "POST",
-                //             "timeout": 0,
-                //             "headers": {
-                //                 "Content-Type": "application/json"
-                //             },
-                //             "data": JSON.stringify({response}),
-                //         };
-
-                //         $.ajax(settings).done(function(response) {
-                //             alert(JSON.stringify(response));
-                //             console.log("2");
-                //         });
-                //         window.location.href= "/"
-                //     },
-                //     "theme": {
-                //         "color": "#3bda89"
-                //     },
-                    
-                // };
-
-                // var rzp1 = new Razorpay(options);
-                // rzp1.open();
-
                 const options = {
                 key: 'rzp_live_02SQsUjFIPjm1R',
                 currency: data.currency,

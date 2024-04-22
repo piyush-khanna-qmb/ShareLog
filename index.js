@@ -363,11 +363,13 @@ app.post('/verification', async (req, res) => {
         } catch (error) {
             console.error("Error updating 'razorpay':", error);
         }
+        res.json({ status: 'ok' })
         res.redirect("/Dashboard");
 	} else {
 		// pass it
+        res.json({ status: 'ok' })
 	}
-	res.json({ status: 'ok' })
+	
 })
 
 app.post('/razorpay', async (req, res) => {

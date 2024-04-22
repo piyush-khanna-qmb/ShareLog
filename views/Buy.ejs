@@ -119,28 +119,27 @@
                 console.log(data)
 
                 const options = {
-                key: 'rzp_live_02SQsUjFIPjm1R',
-                currency: data.currency,
-                amount: data.amount.toString(),
-                order_id: data.id,
-                name: 'ShareLog Premium',
-                description: 'Thank you for nothing. Please give us some money',
-                image: 'https://www.sharelog.in/logo.png',
-                handler: function (response) {
-                    alert(response.razorpay_payment_id)
-                    alert(response.razorpay_order_id)
-                    alert(response.razorpay_signature)
-                },
-                prefill: {
-                    name,
-                    email: 'someone@gmail.com',
-                    phone_number: '9999999999'
+                    key: 'rzp_live_02SQsUjFIPjm1R',
+                    currency: data.currency,
+                    amount: data.amount.toString(),
+                    order_id: data.id,
+                    name: 'ShareLog Premium',
+                    description: 'Thank you for nothing. Please give us some money',
+                    image: 'https://www.sharelog.in/logo.png',
+                    handler: function (response) {
+                        alert(response.razorpay_payment_id)
+                        alert(response.razorpay_order_id)
+                        alert(response.razorpay_signature)
+                    },
+                    prefill: {
+                        name,
+                        email: 'someone@gmail.com',
+                        phone_number: '9999999999'
+                    }
                 }
-            }
-            const paymentObject = new window.Razorpay(options)
-            paymentObject.open()
-        }
-            );
+                const paymentObject = new window.Razorpay(options)
+                paymentObject.open()
+            });
         });
     </script>
     </body>

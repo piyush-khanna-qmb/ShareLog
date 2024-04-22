@@ -349,7 +349,7 @@ app.post('/verification', async (req, res) => {
 		console.log('request is legit')
         console.log("Body is:", req.body);
         try {
-            const status= req.body.payload.payment.order.entity.status;
+            const status= req.body.payload.order.entity.status;
             if(status == "paid") 
             {
                 console.log("Entity is: ", req.body.payload.payment.entity);

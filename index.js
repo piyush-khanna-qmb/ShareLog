@@ -321,7 +321,7 @@ app.get("/", function(req, res) {
 })
 
 app.get('/logo.png', (req, res) => {
-	res.sendFile(path.join(__dirname, '/views/public/test-images/logo.svg'))
+	res.sendFile(path.join(__dirname, '/views/public/test-images/logo.png'))
 })
 
 const razorpay = new Razorpay({

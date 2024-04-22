@@ -329,6 +329,8 @@ const razorpay = new Razorpay({
 	key_secret: 'TiGnwOLjFFr2LlY9bSra3W44'
 })
 
+var mainUserId;
+
 app.post('/verification', async (req, res) => {
 	// do a validation
 	const secret = 'prasheek@3062001'
@@ -354,7 +356,8 @@ app.post('/verification', async (req, res) => {
             }
             else
             {
-                const doc = await User.findOne({ google_client_id: req.session.passport.user.google_client_id });
+                console.log("Printing user id in verify: ", mainUserId);
+                const doc = await User.findOne({ google_client_id: mainUserId });
                 doc.razorpay_id= String(req.body.account_id);
                 doc.period= "permanent";
                 await doc.save(); // Save the changes
@@ -367,7 +370,7 @@ app.post('/verification', async (req, res) => {
         // pass it
 	}
     res.json({ status: 'ok' })
-	
+
 })
 
 app.post('/razorpay', async (req, res) => {
@@ -4030,6 +4033,7 @@ app.get("/Home", (req, res)=>{
 })
 
 app.get("/Welcome", (req, res)=>{
+    mainUserId= req.session.passport.user.google_client_id;
     res.render("Welcome.ejs", 
     {
         username: req.session.passport.user.name,

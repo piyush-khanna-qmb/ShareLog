@@ -364,7 +364,8 @@ app.post('/verification', async (req, res) => {
         // } catch (error) {
         //     console.error("Error updating 'razorpay':", error);
         // }
-        console.log(req.body.payload.payment.entity.notes);
+        console.log("Entity is: ", req.body.payload.payment.entity);
+        console.log("Notes are: ", req.body.payload.payment.entity.notes);
         // console.log("Printing user id in verify: ", mainUserId);
         // const doc = await User.findOne({ google_client_id: mainUserId });
         // doc.razorpay_id= String(req.body.account_id);

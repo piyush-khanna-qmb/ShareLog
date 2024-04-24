@@ -378,7 +378,7 @@ app.post('/verification', async (req, res) => {
 
 app.post('/razorpay', async (req, res) => {
 	const payment_capture = 1
-	const amount = 1
+	const amount = 199
 	const currency = 'INR'
 
     const googId= req.session.passport.user.google_client_id;

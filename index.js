@@ -3032,7 +3032,7 @@ app.get("/Dashboard", async (req, res)=>{
                 }
             }
 
-            console.log("All positions are: ", user.Positions);
+            // console.log("All positions are: ", user.Positions);
 
             const positionsLastWeek = filterPositionsLastWeek(user.Positions);
 

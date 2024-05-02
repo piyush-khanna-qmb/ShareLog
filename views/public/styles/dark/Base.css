@@ -7,13 +7,15 @@
 
 body {
     padding: 2% 2%;
-    background-color: black;
+    /* background-color: black; */
+    background-color: #15161a;
     color: azure;
     font-family: Arial, Helvetica, sans-serif;
 }
 .container0{
     display: flex;
     background-color: #15161a; 
+    width: 185vh;
 }
 .container-heading h1 {
     /* font-family: Poppins; */
@@ -27,6 +29,7 @@ body {
 
 .oopariNavbar {
     padding-top: 1rem;
+    width: 100%;
 }
 
 
@@ -46,7 +49,7 @@ body {
 
 /* Search bar styling */
 .search-bar {
-    width: 50vh;
+    width: 20vh;
     background-color: #bbb; /* Grey background */
     color: #333; /* Dark text color */
     transition: background-color 0.7s; /* Smooth transition */

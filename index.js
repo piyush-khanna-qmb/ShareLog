@@ -2924,7 +2924,7 @@ app.get("/Dashboard", async (req, res)=>{
                         text: "",
                         posType: thisPosition.positionType,
                         segmentType: thisPosition.exchangeSegment,
-                        costPrice: thisPosition.costPrice,
+                        costPrice: Math.round(thisPosition.costPrice),
                         buyQty: thisPosition.buyQty,
                         profit: thisPosition.realizedProfit,
                         brokerage: thisPosition.unrealizedProfit,
@@ -3032,6 +3032,10 @@ app.get("/Dashboard", async (req, res)=>{
                 }
             }
 
+            console.log("All positions are: ", user.Positions);
+
+            const positionsLastWeek = filterPositionsLastWeek(user.Positions);
+
             var themeThis= user.theme;
             res.render("Dashboard.ejs", {
                 theme: themeThis,
@@ -3046,7 +3050,7 @@ app.get("/Dashboard", async (req, res)=>{
                 TotPos: user.Total_Positions,
                 TotHolds: user.Total_Holdings,
                 Amount: Number(user.NetPnL).toFixed(2),
-                carouselData: user.Positions,
+                carouselData: positionsLastWeek,
                 Strategies: user.Strategies
             });
         }   
@@ -3056,6 +3060,23 @@ app.get("/Dashboard", async (req, res)=>{
         res.redirect("/Home")
     }
 })
+
+function filterPositionsLastWeek(positions) {
+    // Get today's date
+    const today = new Date();
+
+    // Calculate the date 7 days ago
+    const oneWeekAgo = new Date(today);
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    // Filter positions bought within the last week
+    const positionsLastWeek = positions.filter(position => {
+        const dateOfBuy = new Date(position.dateOfBuy);
+        return dateOfBuy >= oneWeekAgo && dateOfBuy <= today;
+    });
+
+    return positionsLastWeek;
+}
 
 app.post("/getChartData", async function (req, res) {
     const posId= req.body.userID;

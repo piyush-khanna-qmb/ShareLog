@@ -101,3 +101,8 @@ x. Calendar Heatmap render
 >. Updated API access token for month of April/May.
 >. Converted Unix epoch timestamps to standard timestamp for chart generation.
 >. Sent project access manager invite to Prasheek
+
+[Patch Update - 3rd May, 2024]
+>. Made changes in UI with media queries to incorporate responsiveness in website
+>. Rounded off cost prices
+>. Filtered only weekly trades to appear in dashboard (Positions taken in respective week)

@@ -216,7 +216,7 @@ passport.deserializeUser(function(id, done) {
 passport.use("google", new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
-    callbackURL: "https://www.sharelog.in/auth/google/ShareLog",
+    callbackURL: "http://localhost:3000/auth/google/ShareLog",
     userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
   },
   async function(accessToken, refreshToken, profile, cb) {
@@ -3589,12 +3589,13 @@ app.get("/Setup-Report", async (req, res)=>{
             const thisPosStrategy= String(thisPosition.strategyUsed);
 
             let thisSetup= [];
+            let cpIsBaar= Number(Number(thisPosition.costPrice)*Number(thisPosition.buyQty)).toFixed(2) ;
             thisSetup.push(thisPosition.dayOfBuy);
             thisSetup.push(thisPosition.dateOfBuy);
-            thisSetup.push(thisPosition.costPrice);
+            thisSetup.push(cpIsBaar);
             if(thisPosition.profit > 0) {
                 thisSetup.push(thisPosition.profit);
-                thisSetup.push(Number(thisPosition.profit)/Number(thisPosition.costPrice) * 100);
+                thisSetup.push(Number(Number(thisPosition.profit)/Number(cpIsBaar) * 100).toFixed(2) );
             }
             else {
                 thisSetup.push(0);
@@ -3603,7 +3604,7 @@ app.get("/Setup-Report", async (req, res)=>{
             
             if(thisPosition.profit < 0) {
                 thisSetup.push(-Number(thisPosition.profit));
-                thisSetup.push(Number(thisPosition.profit)/Number(thisPosition.costPrice) * -100);
+                thisSetup.push(Number(Number(thisPosition.profit)/Number(cpIsBaar) * -100).toFixed(2));
             }
             else {
                 thisSetup.push(0);

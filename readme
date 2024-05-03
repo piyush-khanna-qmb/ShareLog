@@ -106,3 +106,7 @@ x. Calendar Heatmap render
 >. Made changes in UI with media queries to incorporate responsiveness in website
 >. Rounded off cost prices
 >. Filtered only weekly trades to appear in dashboard (Positions taken in respective week)
+
+[Major Bug Fix - 3rd May, 2024]
+>. Fixed 10 years date delay in chart rendering due to unix epoch
+>. Reinforced Chart Data retrieval from Dhan Servers

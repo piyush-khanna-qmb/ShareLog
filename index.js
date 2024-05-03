@@ -216,7 +216,7 @@ passport.deserializeUser(function(id, done) {
 passport.use("google", new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
-    callbackURL: "https://www.sharelog.in/auth/google/ShareLog",
+    callbackURL: "http://localhost:3000/auth/google/ShareLog",
     userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
   },
   async function(accessToken, refreshToken, profile, cb) {
@@ -2821,6 +2821,33 @@ function getFakeChartData() {
 
     return Response;
 }
+function addTenYears(chartObject) {
+    // Copy the original chart object to avoid modifying the original data
+    const modifiedChartObject = { ...chartObject };
+  
+    // Get the array of start times from the chart object
+    const startTimes = modifiedChartObject.start_Time;
+  
+  
+    for (let i = 0; i < startTimes.length; i++) {
+      // Calculate the difference between the original start time and January 1, 1980
+      const januaryFirst1980 = new Date('1980-01-01').getTime();
+        const januaryFirst1990 = new Date('1990-01-01').getTime();
+
+        // Calculate the difference in milliseconds between the two dates
+        const millisecondsDifference = januaryFirst1990 - januaryFirst1980;
+
+        // Convert milliseconds to seconds
+        const secondsDifference = millisecondsDifference / 1000;
+      startTimes[i] += (secondsDifference - (24*60*60));
+    }
+  
+    // Update the start_Time property in the modified chart object
+    modifiedChartObject.start_Time = startTimes;
+  
+    // Return the modified chart object
+    return modifiedChartObject;
+  }  
 
 app.get("/Dashboard", async (req, res)=>{
 
@@ -2884,13 +2911,15 @@ app.get("/Dashboard", async (req, res)=>{
                         console.log("Chart lost as application not opened");
                         chartData= getFakeChartData();
                     } 
+
+                    const modifiedChartObject = addTenYears(chartData);
                     
                     var huiChart= {};
                     huiChart.open= chartData.open;
                     huiChart.high= chartData.high;
                     huiChart.low= chartData.low;
                     huiChart.close= chartData.close;
-                    huiChart.time= chartData.start_Time;
+                    huiChart.time= modifiedChartObject.start_Time;
 
                     chartData= huiChart;
 

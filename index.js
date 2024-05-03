@@ -2869,13 +2869,7 @@ app.get("/Dashboard", async (req, res)=>{
 
                     var chartData;
                     try {
-                        i+=1;
-                        if(i==2) {
-                            console.log("Asli try");
-                            chartData= await getChartData(thisPosition.securityId , "NSE_FNO", "OPTIDX");
-                        }
-                        else
-                            chartData= getFakeChartData();
+                        chartData= await getChartData(thisPosition.securityId , "NSE_FNO", "OPTIDX");
                     }
                     catch(err) {
                         chartData= null;

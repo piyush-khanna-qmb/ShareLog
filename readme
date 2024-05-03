@@ -109,4 +109,5 @@ x. Calendar Heatmap render
 
 [Major Bug Fix - 3rd May, 2024]
 >. Fixed 10 years date delay in chart rendering due to unix epoch
->. Reinforced Chart Data retrieval from Dhan Servers
+>. Reinforced Chart Data retrieval from Dhan Servers.
+>. Renamed Fando to F&O in overview report
